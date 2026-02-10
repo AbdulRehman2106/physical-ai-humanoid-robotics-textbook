@@ -3,18 +3,17 @@
   "name": "physical-ai-backend",
   "builds": [
     {
-      "src": "src/api/server.ts",
+      "src": "api/index.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "src/api/server.ts"
+      "src": "/(.*)",
+      "dest": "api/index.ts"
     }
   ],
   "env": {
-    "NODE_ENV": "production",
-    "COHERE_API_KEY": "@cohere-api-key"
+    "NODE_ENV": "production"
   }
 }
