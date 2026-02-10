@@ -1,0 +1,67 @@
+<!-- Communication Patterns Comparison Diagram
+
+     This diagram should compare the three main ROS 2 communication patterns:
+
+     1. Three-Column Layout:
+
+        **Column 1: Topics (Pub-Sub)**
+        - Icon: Multiple nodes connected to a central topic
+        - Characteristics:
+          * Many-to-many
+          * Asynchronous
+          * Continuous data
+          * Fire-and-forget
+        - Use cases: Sensor data, state updates
+        - Example: Camera → /image → [Detector, Recorder, Viewer]
+
+        **Column 2: Services (Request-Response)**
+        - Icon: Client and server with bidirectional arrow
+        - Characteristics:
+          * One-to-one
+          * Synchronous
+          * Occasional operations
+          * Waits for response
+        - Use cases: Queries, computations
+        - Example: Client → "Compute path" → Server → Path result
+
+        **Column 3: Actions (Goal-Based)**
+        - Icon: Client, server, with feedback loop
+        - Characteristics:
+          * One-to-one
+          * Asynchronous with feedback
+          * Long-running tasks
+          * Cancellable
+        - Use cases: Navigation, manipulation
+        - Example: Client → Goal → Server → [Feedback...] → Result
+
+     2. Decision Tree (bottom):
+        - "Need response?" → No: Topic, Yes: Continue
+        - "Takes >1 second?" → No: Service, Yes: Action
+        - "Need progress updates?" → No: Service, Yes: Action
+
+     3. Visual Style:
+        - Clean comparison layout
+        - Color code: Green (Topics), Blue (Services), Orange (Actions)
+        - Icons for each pattern
+        - Clear labels and examples
+
+     Dimensions: 1400x900px, SVG format
+     Accessibility: Detailed comparison of all three patterns
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 900" role="img" aria-labelledby="comm-patterns-title comm-patterns-desc">
+  <title id="comm-patterns-title">ROS 2 Communication Patterns Comparison</title>
+  <desc id="comm-patterns-desc">Comparison of three ROS 2 communication patterns: Topics (many-to-many, asynchronous, for continuous data), Services (one-to-one, synchronous, for occasional operations), and Actions (one-to-one with feedback, for long-running tasks). Includes decision tree for pattern selection.</desc>
+
+  <!-- Placeholder content - to be replaced with actual diagram -->
+  <rect width="1400" height="900" fill="#f8f9fa"/>
+  <text x="700" y="450" text-anchor="middle" font-size="24" fill="#333">
+    Communication Patterns Comparison
+  </text>
+  <text x="700" y="490" text-anchor="middle" font-size="16" fill="#666">
+    [Comparison diagram to be created]
+  </text>
+  <text x="700" y="520" text-anchor="middle" font-size="14" fill="#666">
+    Topics | Services | Actions
+  </text>
+</svg>

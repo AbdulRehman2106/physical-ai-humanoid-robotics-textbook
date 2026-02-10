@@ -1,0 +1,60 @@
+<!-- ROS 2 Graph Visualization
+
+     This diagram should show a sample ROS 2 computational graph:
+
+     1. Nodes (represented as rounded rectangles):
+        - /camera_driver
+        - /image_processor
+        - /object_detector
+        - /robot_controller
+        - /visualizer
+
+     2. Topics (represented as ovals/ellipses):
+        - /camera/image_raw
+        - /camera/processed
+        - /detected_objects
+        - /cmd_vel
+
+     3. Connections (arrows):
+        - camera_driver → /camera/image_raw → image_processor
+        - image_processor → /camera/processed → object_detector
+        - object_detector → /detected_objects → robot_controller
+        - robot_controller → /cmd_vel → (actuators)
+        - /camera/image_raw → visualizer (also subscribes)
+
+     4. Legend:
+        - Rectangle = Node
+        - Oval = Topic
+        - Arrow = Data flow (publish/subscribe)
+
+     5. Visual Style:
+        - Clean, technical diagram
+        - Color code: Blue for nodes, Green for topics
+        - Clear directional arrows
+        - Labels on all elements
+
+     6. Annotations:
+        - Show publisher/subscriber relationships
+        - Indicate message types on topics
+        - Show data flow direction
+
+     Dimensions: 1200x800px, SVG format
+     Accessibility: Describe the graph structure and data flow
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="ros2-graph-title ros2-graph-desc">
+  <title id="ros2-graph-title">ROS 2 Graph Visualization</title>
+  <desc id="ros2-graph-desc">Example ROS 2 computational graph showing nodes (camera_driver, image_processor, object_detector, robot_controller, visualizer) connected via topics (camera/image_raw, camera/processed, detected_objects, cmd_vel). Arrows show data flow from publishers to subscribers, demonstrating how multiple nodes communicate through shared topics.</desc>
+
+  <!-- Placeholder content - to be replaced with actual diagram -->
+  <rect width="1200" height="800" fill="#f8f9fa"/>
+  <text x="600" y="400" text-anchor="middle" font-size="24" fill="#333">
+    ROS 2 Graph Visualization
+  </text>
+  <text x="600" y="440" text-anchor="middle" font-size="16" fill="#666">
+    [Graph diagram to be created showing nodes and topics]
+  </text>
+  <text x="600" y="470" text-anchor="middle" font-size="14" fill="#666">
+    Nodes (rectangles) connected via Topics (ovals)
+  </text>
+</svg>

@@ -1,0 +1,386 @@
+---
+title: UI Components Showcase
+description: Interactive showcase of all enhanced UI components
+---
+
+import {
+  Badge,
+  Timeline,
+  InfoBox,
+  Accordion,
+  StatsCard,
+  FeatureCard,
+  AnimatedSection,
+  Callout,
+  Checkpoint,
+  Quiz,
+  CodePlayground,
+  InteractiveDiagram
+} from '@site/src/components';
+
+# 🎨 UI Components Showcase
+
+Welcome to the interactive showcase of all enhanced UI components in the Physical AI Textbook!
+
+---
+
+## 📛 Badges
+
+Use badges to highlight content status:
+
+<div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
+  <Badge type="new">New Content</Badge>
+  <Badge type="updated">Recently Updated</Badge>
+  <Badge type="beta">Beta Feature</Badge>
+  <Badge type="advanced">Advanced Topic</Badge>
+  <Badge type="experimental">Experimental</Badge>
+</div>
+
+---
+
+## 📊 Stats Cards
+
+Display key metrics and statistics:
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+  <StatsCard
+    value="1000+"
+    label="Active Students"
+    icon="👥"
+    trend="up"
+    trendValue="+15%"
+  />
+  <StatsCard
+    value="11"
+    label="Comprehensive Chapters"
+    icon="📚"
+    trend="neutral"
+  />
+  <StatsCard
+    value="20+"
+    label="Code Examples"
+    icon="💻"
+    trend="up"
+    trendValue="+5"
+  />
+  <StatsCard
+    value="98%"
+    label="Satisfaction Rate"
+    icon="⭐"
+    trend="up"
+    trendValue="+3%"
+  />
+</div>
+
+---
+
+## 🎯 Feature Cards
+
+Showcase features with beautiful gradient cards:
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+  <FeatureCard
+    icon="🤖"
+    title="Hands-On Robotics"
+    description="Learn by building real autonomous systems with ROS 2 and Gazebo"
+    gradient="linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+  />
+  <FeatureCard
+    icon="🧠"
+    title="AI Integration"
+    description="Master Vision-Language-Action models and embodied intelligence"
+    gradient="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+  />
+  <FeatureCard
+    icon="🚀"
+    title="Production Ready"
+    description="Deploy robots with confidence using industry best practices"
+    gradient="linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+  />
+</div>
+
+---
+
+## 📦 Info Boxes
+
+Enhanced callout boxes for different types of information:
+
+<InfoBox type="info" title="Information">
+  This is an informational message with a beautiful gradient border and icon.
+</InfoBox>
+
+<InfoBox type="success" title="Success">
+  Great job! You've successfully completed this section.
+</InfoBox>
+
+<InfoBox type="warning" title="Warning">
+  Be careful when working with hardware to avoid damage.
+</InfoBox>
+
+<InfoBox type="danger" title="Danger">
+  This operation is irreversible. Make sure you have backups!
+</InfoBox>
+
+<InfoBox type="tip" title="Pro Tip">
+  Use keyboard shortcuts to navigate faster through the documentation.
+</InfoBox>
+
+---
+
+## 📅 Timeline
+
+Display sequential steps or historical events:
+
+<Timeline items={[
+  {
+    icon: '🎯',
+    title: 'Chapter 1: Introduction',
+    description: 'Learn the fundamentals of Physical AI and autonomous systems'
+  },
+  {
+    icon: '🔧',
+    title: 'Chapter 2-4: ROS 2 Basics',
+    description: 'Master ROS 2 fundamentals, communication, and node architecture'
+  },
+  {
+    icon: '🎮',
+    title: 'Chapter 5-7: Simulation',
+    description: 'Build and test robots in Gazebo and NVIDIA Isaac Sim'
+  },
+  {
+    icon: '🧠',
+    title: 'Chapter 8-9: AI Models',
+    description: 'Implement Vision-Language-Action models and embodied intelligence'
+  },
+  {
+    icon: '🚀',
+    title: 'Chapter 10-11: Production',
+    description: 'Deploy robots with sim-to-real transfer and error handling'
+  }
+]} />
+
+---
+
+## 🎵 Accordion
+
+Collapsible content sections for FAQs or detailed information:
+
+<Accordion items={[
+  {
+    title: 'What is Physical AI?',
+    content: 'Physical AI refers to artificial intelligence systems that interact with and manipulate the physical world through robotic embodiments. It combines computer vision, natural language processing, and motor control to create autonomous agents.',
+    icon: '🤖'
+  },
+  {
+    title: 'Do I need prior robotics experience?',
+    content: 'No prior robotics experience is required! This textbook starts from the fundamentals and progressively builds your knowledge. Basic programming skills in Python are helpful but not mandatory.',
+    icon: '📚'
+  },
+  {
+    title: 'What tools will I learn?',
+    content: 'You will learn ROS 2 (Robot Operating System), Gazebo simulation, NVIDIA Isaac Sim, Vision-Language-Action models, and various AI frameworks for robotics applications.',
+    icon: '🛠️'
+  },
+  {
+    title: 'How long does it take to complete?',
+    content: 'The complete curriculum takes approximately 12-16 weeks at a pace of 8-10 hours per week. However, you can learn at your own pace and revisit chapters as needed.',
+    icon: '⏱️'
+  }
+]} />
+
+---
+
+## ✅ Checkpoint
+
+Interactive checkpoints to track learning progress:
+
+<Checkpoint
+  id="showcase-checkpoint"
+  title="Understanding UI Components"
+  items={[
+    'I understand how to use Badge components',
+    'I can implement StatsCard for metrics',
+    'I know how to create Timeline visualizations',
+    'I can use InfoBox for different message types',
+    'I understand Accordion for collapsible content'
+  ]}
+/>
+
+---
+
+## 💬 Callout
+
+Special callout boxes for important information:
+
+<Callout type="note" title="Note">
+  All these components are fully responsive and work seamlessly on mobile devices!
+</Callout>
+
+<Callout type="tip" title="Customization Tip">
+  You can customize colors, gradients, and animations by modifying the component styles.
+</Callout>
+
+---
+
+## 🎮 Interactive Code Playground
+
+Try out code examples directly in the browser:
+
+<CodePlayground
+  code={`# Example: Simple ROS 2 Node
+import rclpy
+from rclpy.node import Node
+
+class HelloWorldNode(Node):
+    def __init__(self):
+        super().__init__('hello_world')
+        self.get_logger().info('Hello, Physical AI!')
+
+def main():
+    rclpy.init()
+    node = HelloWorldNode()
+    rclpy.spin(node)
+    rclpy.shutdown()
+
+if __name__ == '__main__':
+    main()`}
+  language="python"
+  title="ROS 2 Hello World Node"
+/>
+
+---
+
+## 📊 Interactive Diagram
+
+Visualize concepts with interactive diagrams:
+
+<InteractiveDiagram
+  title="ROS 2 Node Communication"
+  steps={[
+    {
+      id: 'step1',
+      label: 'Sensor Node',
+      description: 'Sensor nodes collect data from the environment (cameras, lidar, IMU) and publish it to topics.'
+    },
+    {
+      id: 'step2',
+      label: 'Processing Node',
+      description: 'Processing nodes subscribe to sensor data, perform computations, and publish control commands.'
+    },
+    {
+      id: 'step3',
+      label: 'Actuator Node',
+      description: 'Actuator nodes receive control commands and execute physical actions (motor control, gripper movement).'
+    }
+  ]}
+/>
+
+---
+
+## 🎯 Quiz
+
+Test your knowledge with interactive quizzes:
+
+<Quiz
+  title="ROS 2 Fundamentals Quiz"
+  questions={[
+    {
+      id: 'q1',
+      question: 'What does ROS stand for?',
+      options: [
+        'Robot Operating System',
+        'Robotic Optimization Software',
+        'Remote Operation Service',
+        'Real-time Object Sensing'
+      ],
+      correctAnswer: 0,
+      explanation: 'ROS stands for Robot Operating System. It\'s a flexible framework for writing robot software, providing tools, libraries, and conventions to simplify the task of creating complex and robust robot behavior.'
+    },
+    {
+      id: 'q2',
+      question: 'Which communication pattern does ROS 2 use for asynchronous data streaming?',
+      options: [
+        'Services',
+        'Actions',
+        'Topics',
+        'Parameters'
+      ],
+      correctAnswer: 2,
+      explanation: 'Topics are used for continuous data streaming in a publish-subscribe pattern. Services are for request-response, and Actions are for long-running tasks.'
+    }
+  ]}
+/>
+
+---
+
+## 🎨 Design System
+
+### Color Gradients
+
+<div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
+  <div style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', padding: '2rem', borderRadius: '12px', color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
+    Primary
+  </div>
+  <div style={{ background: 'linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)', padding: '2rem', borderRadius: '12px', color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
+    Success
+  </div>
+  <div style={{ background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)', padding: '2rem', borderRadius: '12px', color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
+    Warning
+  </div>
+  <div style={{ background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)', padding: '2rem', borderRadius: '12px', color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
+    Danger
+  </div>
+  <div style={{ background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)', padding: '2rem', borderRadius: '12px', color: 'white', textAlign: 'center', fontWeight: 'bold' }}>
+    Info
+  </div>
+</div>
+
+### Animations
+
+All components feature smooth animations:
+- **Fade In**: Gentle entrance animations
+- **Slide Up**: Content reveals from bottom
+- **Hover Effects**: Interactive feedback on hover
+- **Pulse Glow**: Attention-grabbing effects
+- **Gradient Shift**: Animated backgrounds
+
+---
+
+## 🚀 Global Features
+
+These features are automatically available on all pages:
+
+1. **Reading Progress Bar**: Fixed at the top, shows scroll progress
+2. **Floating Action Button**: Bottom-right corner with quick actions
+3. **Enhanced Search**: Press `Ctrl+K` or `⌘K` to open
+4. **Smooth Scrolling**: All navigation uses smooth scroll
+5. **Dark Mode**: Toggle between light and dark themes
+6. **Responsive Design**: Works perfectly on all devices
+
+---
+
+## 📱 Mobile Optimized
+
+All components are fully responsive and touch-optimized for mobile devices. Try resizing your browser window to see the responsive behavior!
+
+---
+
+## ♿ Accessibility
+
+- ✅ Keyboard navigation support
+- ✅ ARIA labels for screen readers
+- ✅ High contrast ratios (WCAG 2.1 AA)
+- ✅ Focus indicators
+- ✅ Reduced motion support
+
+---
+
+## 🎉 Get Started
+
+Ready to explore the textbook? Head over to [Chapter 1: Introduction to Physical AI](/docs/chapters/physical-ai-intro) to begin your journey!
+
+<div style={{ textAlign: 'center', marginTop: '3rem' }}>
+  <a href="/docs/intro" className="button button--primary button--lg">
+    Start Learning 🚀
+  </a>
+</div>

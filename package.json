@@ -1,0 +1,58 @@
+{
+  "name": "physical-ai-textbook",
+  "version": "1.0.0",
+  "description": "Physical AI & Humanoid Robotics Digital Book - A comprehensive educational resource",
+  "private": true,
+  "scripts": {
+    "docusaurus": "docusaurus",
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy",
+    "clear": "docusaurus clear",
+    "serve": "docusaurus serve",
+    "write-translations": "docusaurus write-translations",
+    "write-heading-ids": "docusaurus write-heading-ids",
+    "typecheck": "tsc",
+    "check-readability": "node scripts/check-readability.js",
+    "test:accessibility": "npm run build && pa11y-ci",
+    "test:code-examples": "pytest tests/code-examples/"
+  },
+  "dependencies": {
+    "@docusaurus/core": "^3.1.0",
+    "@docusaurus/preset-classic": "^3.1.0",
+    "@mdx-js/react": "^3.0.0",
+    "clsx": "^2.0.0",
+    "framer-motion": "^10.18.0",
+    "prism-react-renderer": "^2.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@axe-core/cli": "^4.11.1",
+    "@docusaurus/module-type-aliases": "^3.1.0",
+    "@docusaurus/tsconfig": "^3.1.0",
+    "@docusaurus/types": "^3.1.0",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.0",
+    "lighthouse": "^13.0.2",
+    "pa11y": "^9.1.0",
+    "textstat": "^0.8.0",
+    "typescript": "~5.3.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.5%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "engines": {
+    "node": ">=18.0"
+  }
+}

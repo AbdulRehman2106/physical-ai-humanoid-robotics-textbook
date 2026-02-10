@@ -1,0 +1,63 @@
+<!-- ROS 2 Architecture Diagram
+
+     This diagram should illustrate the ROS 2 architecture layers and components:
+
+     1. Layered Architecture (bottom to top):
+
+        **Layer 1: Operating System**
+        - Linux (Ubuntu), Windows, macOS
+        - Hardware drivers
+
+        **Layer 2: DDS (Data Distribution Service)**
+        - Communication middleware
+        - Real-time, reliable messaging
+        - Discovery and QoS
+
+        **Layer 3: ROS 2 Core (rclcpp/rclpy)**
+        - Node management
+        - Topic/Service/Action APIs
+        - Lifecycle management
+        - Parameter system
+
+        **Layer 4: ROS 2 Tools & Libraries**
+        - rviz2 (visualization)
+        - rqt (GUI tools)
+        - tf2 (transforms)
+        - Navigation2, MoveIt2, etc.
+
+        **Layer 5: Application Layer**
+        - User nodes
+        - Robot-specific code
+
+     2. Communication Patterns (side panel):
+        - Topics (pub-sub)
+        - Services (request-response)
+        - Actions (goal-based)
+        - Parameters (configuration)
+
+     3. Visual Style:
+        - Clean layered diagram
+        - Color code each layer
+        - Show bidirectional arrows between layers
+        - Include key components in each layer
+
+     Dimensions: 1000x800px, SVG format
+     Accessibility: Describe the layered architecture and communication patterns
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800" role="img" aria-labelledby="ros2-arch-title ros2-arch-desc">
+  <title id="ros2-arch-title">ROS 2 Architecture</title>
+  <desc id="ros2-arch-desc">Layered architecture diagram showing ROS 2 components from bottom to top: Operating System layer, DDS middleware layer, ROS 2 Core (rclcpp/rclpy), ROS 2 Tools and Libraries, and Application layer. Side panel shows communication patterns: Topics (pub-sub), Services (request-response), Actions (goal-based), and Parameters (configuration).</desc>
+
+  <!-- Placeholder content - to be replaced with actual diagram -->
+  <rect width="1000" height="800" fill="#f8f9fa"/>
+  <text x="500" y="400" text-anchor="middle" font-size="24" fill="#333">
+    ROS 2 Architecture Diagram
+  </text>
+  <text x="500" y="440" text-anchor="middle" font-size="16" fill="#666">
+    [Layered architecture diagram to be created]
+  </text>
+  <text x="500" y="470" text-anchor="middle" font-size="14" fill="#666">
+    OS → DDS → ROS 2 Core → Tools → Application
+  </text>
+</svg>

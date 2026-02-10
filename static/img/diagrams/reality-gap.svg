@@ -1,0 +1,83 @@
+<!-- Reality Gap Comparison Diagram
+
+     This diagram should illustrate the differences between simulation and reality:
+
+     1. Split-Screen Layout (Left: Simulation | Right: Reality):
+
+        **Simulation Side:**
+        - Clean, perfect rendering
+        - Precise object positions
+        - Uniform lighting
+        - Perfect sensor readings
+        - Deterministic physics
+        - Labels: "Idealized", "Predictable", "Perfect Information"
+
+        **Reality Side:**
+        - Noisy, imperfect conditions
+        - Uncertain object states
+        - Variable lighting and shadows
+        - Noisy sensor data
+        - Stochastic outcomes
+        - Labels: "Complex", "Uncertain", "Partial Observability"
+
+     2. Specific Comparisons (with connecting arrows):
+
+        **Physics:**
+        - Sim: Perfect contact, ideal friction
+        - Real: Complex contact patches, variable friction
+
+        **Sensors:**
+        - Sim: Perfect camera, no noise
+        - Real: Motion blur, lens distortion, varying exposure
+
+        **Actuators:**
+        - Sim: Instant response, no backlash
+        - Real: Latency, compliance, thermal effects
+
+        **Environment:**
+        - Sim: Controlled, static
+        - Real: Dynamic, unpredictable
+
+     3. Visual Style:
+        - Use side-by-side comparison format
+        - Color code: Blue for simulation, Orange for reality
+        - Include specific examples (robot grasping, navigation)
+        - Show measurement differences (graphs, error bars)
+
+     4. Annotations:
+        - "Gap" indicators showing discrepancies
+        - Percentage differences where applicable
+        - Key challenge areas highlighted
+
+     Dimensions: 1200x800px, SVG format
+     Accessibility: Detailed description of each comparison point
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="reality-gap-title reality-gap-desc">
+  <title id="reality-gap-title">Reality Gap Comparison</title>
+  <desc id="reality-gap-desc">Side-by-side comparison showing differences between simulation and reality in robotics. Left side shows idealized simulation with perfect physics, sensors, and environment. Right side shows real-world complexity with noisy sensors, uncertain physics, and environmental variations. Key gaps highlighted include contact dynamics, sensor noise, actuator compliance, and environmental unpredictability.</desc>
+
+  <!-- Placeholder content - to be replaced with actual diagram -->
+  <rect width="1200" height="800" fill="#f8f9fa"/>
+
+  <!-- Split screen indicator -->
+  <rect x="0" y="0" width="600" height="800" fill="#e3f2fd"/>
+  <rect x="600" y="0" width="600" height="800" fill="#fff3e0"/>
+
+  <text x="300" y="100" text-anchor="middle" font-size="32" font-weight="bold" fill="#1976d2">
+    SIMULATION
+  </text>
+  <text x="900" y="100" text-anchor="middle" font-size="32" font-weight="bold" fill="#f57c00">
+    REALITY
+  </text>
+
+  <text x="600" y="400" text-anchor="middle" font-size="24" fill="#333">
+    Reality Gap Comparison
+  </text>
+  <text x="600" y="440" text-anchor="middle" font-size="16" fill="#666">
+    [Detailed comparison diagram to be created]
+  </text>
+  <text x="600" y="470" text-anchor="middle" font-size="14" fill="#666">
+    Physics | Sensors | Actuators | Environment
+  </text>
+</svg>

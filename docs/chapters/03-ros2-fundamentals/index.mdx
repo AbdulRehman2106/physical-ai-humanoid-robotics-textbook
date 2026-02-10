@@ -1,0 +1,796 @@
+---
+sidebar_position: 3
+title: ROS 2 Fundamentals
+description: Learn the Robot Operating System 2 architecture, create nodes, and implement publisher-subscriber communication
+---
+
+# ROS 2 Fundamentals
+
+import Callout from '@site/src/components/Callout';
+import CodePlayground from '@site/src/components/CodePlayground';
+import Quiz from '@site/src/components/Quiz';
+import InteractiveDiagram from '@site/src/components/InteractiveDiagram';
+import Checkpoint from '@site/src/components/Checkpoint';
+
+## Learning Outcomes
+
+By the end of this chapter, you will be able to:
+
+- **Explain ROS 2 architecture** and its key components (nodes, topics, services, actions)
+- **Create and run ROS 2 nodes** using Python
+- **Implement publisher-subscriber communication** for data exchange
+- **Understand the ROS 2 graph** and how nodes communicate
+- **Set up a ROS 2 development environment** and run basic examples
+
+## Prerequisites
+
+- Chapters 1-2: Physical AI fundamentals
+- Basic Python programming
+- Command-line familiarity
+
+---
+
+## Introduction
+
+In Chapters 1 and 2, we explored the theoretical foundations of Physical AI—embodied intelligence, sensor-motor loops, and the reality gap. Now it's time to get practical. To build real robots, we need software infrastructure that handles communication, coordination, and control. That's where **ROS 2** (Robot Operating System 2) comes in.
+
+ROS 2 is the industry-standard framework for robotics development. It's used by companies like Boston Dynamics, NASA, BMW, and thousands of research labs worldwide. Whether you're building an autonomous vehicle, a warehouse robot, or a humanoid assistant, ROS 2 provides the tools you need.
+
+<Callout type="info" title="What You'll Build">
+In this chapter, you'll create your first ROS 2 nodes, implement publisher-subscriber communication, and understand how robots coordinate multiple processes. By the end, you'll have hands-on experience with the core patterns used in professional robotics systems.
+</Callout>
+
+---
+
+## What is ROS 2?
+
+**ROS 2** (Robot Operating System 2) is an open-source framework for building robot software. Despite its name, it's not an operating system like Linux or Windows. Instead, it's a middleware layer that sits on top of an OS (usually Ubuntu Linux) and provides:
+
+- **Communication infrastructure**: How different parts of your robot talk to each other
+- **Hardware abstraction**: Unified interfaces for sensors and actuators
+- **Standard tools**: Visualization, debugging, logging, and simulation
+- **Package ecosystem**: Thousands of pre-built components for common robotics tasks
+
+### Why ROS 2 Exists
+
+Modern robots are complex systems with many concurrent processes:
+- Camera processing
+- Lidar scanning
+- Path planning
+- Motor control
+- Safety monitoring
+- User interface
+
+Each of these could be a separate program running simultaneously. ROS 2 provides the "glue" that lets these programs communicate efficiently and reliably.
+
+### ROS 1 vs ROS 2
+
+If you've heard of ROS before, you might wonder: why ROS 2?
+
+| Feature | ROS 1 | ROS 2 |
+|---------|-------|-------|
+| **Communication** | Custom TCP/UDP | DDS (industry standard) |
+| **Real-time** | Limited support | Real-time capable |
+| **Security** | None | Authentication, encryption |
+| **Multi-robot** | Difficult | Native support |
+| **Platforms** | Linux only | Linux, Windows, macOS |
+| **Lifecycle** | Basic | Managed node lifecycle |
+| **QoS** | Limited | Configurable Quality of Service |
+
+<Callout type="insight" title="Why the Upgrade Matters">
+ROS 2 was redesigned from the ground up to address ROS 1's limitations. The use of DDS (Data Distribution Service) provides industrial-grade reliability, real-time performance, and security—essential for production robotics systems.
+</Callout>
+
+### ROS 2 Distributions
+
+ROS 2 releases follow a predictable schedule with codenames:
+
+- **Humble Hawksbill** (May 2022): Current LTS (Long-Term Support until 2027)
+- **Iron Irwini** (May 2023): Standard release
+- **Jazzy Jalisco** (May 2024): Latest standard release
+
+**For this textbook, we use ROS 2 Humble** because it's the LTS version with the longest support period.
+
+---
+
+## ROS 2 Architecture
+
+Understanding ROS 2's architecture is key to building effective robot systems. Let's explore the core concepts.
+
+### Nodes: The Building Blocks
+
+A **node** is a single-purpose process that performs one specific task. Examples:
+- A camera driver node that publishes images
+- A path planning node that computes trajectories
+- A motor controller node that sends commands to actuators
+
+**Design principle**: Each node should do one thing well. This modularity makes systems easier to develop, test, and maintain.
+
+### Topics: Publish-Subscribe Messaging
+
+**Topics** enable asynchronous, many-to-many communication using the publish-subscribe pattern:
+
+- **Publishers** send messages to a topic
+- **Subscribers** receive messages from a topic
+- Multiple publishers and subscribers can use the same topic
+- Messages are delivered asynchronously (fire-and-forget)
+
+**When to use topics**: Continuous data streams (sensor readings, robot state, camera images)
+
+**Example**: A camera node publishes images to `/camera/image`, and multiple nodes (object detection, recording, visualization) can subscribe to receive those images.
+
+### Services: Request-Response Pattern
+
+**Services** provide synchronous, one-to-one communication:
+
+- A **client** sends a request and waits for a response
+- A **server** processes the request and returns a result
+- Communication is blocking (client waits for response)
+
+**When to use services**: Occasional operations that need a result (compute path, trigger calibration, query state)
+
+**Example**: A path planning service receives a goal position and returns a computed trajectory.
+
+### Actions: Long-Running Tasks with Feedback
+
+**Actions** are for tasks that take time and provide progress updates:
+
+- A **client** sends a goal
+- An **action server** works on the goal and sends periodic feedback
+- The client can cancel the goal if needed
+- A final result is returned when complete
+
+**When to use actions**: Long-running operations with progress tracking (navigation to goal, grasping object, executing trajectory)
+
+**Example**: A navigation action receives a target pose, sends periodic updates on progress, and returns success/failure when the robot reaches the goal.
+
+### Parameters: Runtime Configuration
+
+**Parameters** allow runtime configuration without recompiling code:
+
+- Each node can declare parameters (e.g., `max_speed`, `camera_resolution`)
+- Parameters can be set via command line, launch files, or dynamically
+- Nodes can react to parameter changes
+
+**When to use parameters**: Tunable values that might change between runs (thresholds, gains, file paths)
+
+### The ROS 2 Graph
+
+The **ROS 2 graph** is the network of nodes and their connections:
+
+- Nodes are vertices
+- Topics, services, and actions are edges
+- You can visualize the graph to understand system architecture
+
+**Viewing the graph**:
+```bash
+ros2 node list          # List all running nodes
+ros2 topic list         # List all active topics
+ros2 service list       # List all available services
+rqt_graph              # Visual graph viewer
+```
+
+<InteractiveDiagram
+  title="ROS 2 Communication Patterns"
+  defaultImageSrc="/img/diagrams/ros2-architecture.svg"
+  steps={[
+    {
+      id: 'topics',
+      label: 'Topics',
+      description: 'Publish-subscribe pattern for continuous data streams. Many-to-many, asynchronous communication.',
+    },
+    {
+      id: 'services',
+      label: 'Services',
+      description: 'Request-response pattern for occasional operations. One-to-one, synchronous communication.',
+    },
+    {
+      id: 'actions',
+      label: 'Actions',
+      description: 'Long-running tasks with feedback and cancellation. Goal-based, asynchronous with progress updates.',
+    },
+    {
+      id: 'parameters',
+      label: 'Parameters',
+      description: 'Runtime configuration values that can be set and modified without recompiling code.',
+    },
+  ]}
+/>
+
+---
+
+## Setting Up Your Environment
+
+Before we write code, let's set up ROS 2 Humble on your system.
+
+### Installation (Ubuntu 22.04)
+
+ROS 2 Humble officially supports Ubuntu 22.04 (Jammy Jellyfish). Here's the installation process:
+
+```bash
+# Set up sources
+sudo apt update && sudo apt install curl -y
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+# Install ROS 2 Humble
+sudo apt update
+sudo apt install ros-humble-desktop -y
+
+# Install development tools
+sudo apt install python3-colcon-common-extensions python3-rosdep -y
+
+# Initialize rosdep
+sudo rosdep init
+rosdep update
+```
+
+### Environment Setup
+
+Every time you open a new terminal, you need to source the ROS 2 setup file:
+
+```bash
+source /opt/ros/humble/setup.bash
+```
+
+**Tip**: Add this to your `~/.bashrc` to automatically source it:
+
+```bash
+echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
+```
+
+### Workspace Setup
+
+Create a workspace for your ROS 2 projects:
+
+```bash
+mkdir -p ~/ros2_ws/src
+cd ~/ros2_ws
+colcon build
+source install/setup.bash
+```
+
+<Callout type="tip" title="Docker Alternative">
+If you can't install ROS 2 natively, use Docker:
+
+```bash
+docker pull osrf/ros:humble-desktop
+docker run -it osrf/ros:humble-desktop
+```
+
+This gives you a complete ROS 2 environment without modifying your system.
+</Callout>
+
+### Testing Your Installation
+
+Verify ROS 2 is working:
+
+```bash
+# Check ROS 2 version
+ros2 --version
+
+# Run a demo talker node
+ros2 run demo_nodes_cpp talker
+
+# In another terminal, run a listener
+ros2 run demo_nodes_cpp listener
+```
+
+If you see the talker publishing messages and the listener receiving them, your installation is working!
+
+---
+
+## Your First ROS 2 Node
+
+Let's create the simplest possible ROS 2 node: a "Hello World" that prints a message.
+
+### Node Anatomy
+
+Every ROS 2 Python node follows this structure:
+
+1. Import `rclpy` (ROS Client Library for Python)
+2. Create a class that inherits from `Node`
+3. Initialize the node with a name
+4. Implement node functionality
+5. Create a `main()` function that initializes, runs, and cleans up
+
+### Hello World Node
+
+<CodePlayground language="python" title="hello_node.py">
+{`#!/usr/bin/env python3
+"""
+Hello World ROS 2 Node
+======================
+
+This is the simplest possible ROS 2 node. It demonstrates:
+- Creating a node
+- Using the ROS 2 logging system
+- Running a node with rclpy
+"""
+
+import rclpy
+from rclpy.node import Node
+
+
+class HelloNode(Node):
+    """A minimal ROS 2 node that prints a greeting message."""
+
+    def __init__(self):
+        # Initialize the parent Node class with a unique node name
+        super().__init__('hello_node')
+
+        # Log an info message using the node's built-in logger
+        self.get_logger().info('Hello from ROS 2! Node initialized successfully.')
+
+        # Create a timer that calls our callback function every 2 seconds
+        self.timer = self.create_timer(2.0, self.timer_callback)
+        self.counter = 0
+
+    def timer_callback(self):
+        """Called every 2 seconds by the timer."""
+        self.counter += 1
+        self.get_logger().info(f'Hello World #{self.counter}')
+
+
+def main(args=None):
+    """Main function that initializes ROS 2, creates the node, and spins."""
+    # Initialize the ROS 2 Python client library
+    rclpy.init(args=args)
+
+    # Create an instance of our HelloNode
+    node = HelloNode()
+
+    try:
+        # Spin the node - this processes callbacks until shutdown
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info('Node stopped by user')
+    finally:
+        # Clean up
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+`}
+</CodePlayground>
+
+### Running the Node
+
+Save this as `hello_node.py`, make it executable, and run it:
+
+```bash
+chmod +x hello_node.py
+python3 hello_node.py
+```
+
+You should see:
+```
+[INFO] [hello_node]: Hello from ROS 2! Node initialized successfully.
+[INFO] [hello_node]: Hello World #1
+[INFO] [hello_node]: Hello World #2
+...
+```
+
+Press `Ctrl+C` to stop the node.
+
+### Key Concepts
+
+**Node Name**: `'hello_node'` is the unique identifier for this node in the ROS 2 graph.
+
+**Logger**: `self.get_logger()` provides structured logging with severity levels (DEBUG, INFO, WARN, ERROR, FATAL).
+
+**Timer**: `self.create_timer(2.0, self.timer_callback)` creates a periodic callback that runs every 2 seconds.
+
+**Spin**: `rclpy.spin(node)` blocks and processes callbacks. Without this, the timer wouldn't run.
+
+<Callout type="warning" title="Common Mistake">
+Forgetting to call `rclpy.spin()` is a common error. Without it, your callbacks (timers, subscribers) won't execute. The node will initialize and immediately exit.
+</Callout>
+
+---
+
+## Publisher-Subscriber Pattern
+
+Now let's implement real communication between nodes using the publish-subscribe pattern.
+
+### When to Use Pub-Sub
+
+Use topics (pub-sub) when:
+- Data flows continuously (sensor readings, state updates)
+- Multiple nodes need the same data
+- You don't need a response
+- Timing isn't critical (asynchronous is okay)
+
+**Examples**: Camera images, lidar scans, robot odometry, joint states
+
+### Creating a Publisher
+
+A publisher sends messages to a topic. Here's a simple publisher that sends string messages:
+
+<CodePlayground language="python" title="simple_publisher.py">
+{`#!/usr/bin/env python3
+"""
+Simple ROS 2 Publisher
+======================
+
+This node demonstrates the publisher pattern in ROS 2.
+"""
+
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+
+class SimplePublisher(Node):
+    """A ROS 2 node that publishes string messages to a topic."""
+
+    def __init__(self):
+        super().__init__('simple_publisher')
+
+        # Create a publisher
+        # Parameters:
+        #   - Message type: String (from std_msgs)
+        #   - Topic name: 'chatter'
+        #   - Queue size: 10 (how many messages to buffer)
+        self.publisher = self.create_publisher(String, 'chatter', 10)
+
+        # Create a timer that publishes every 0.5 seconds (2 Hz)
+        timer_period = 0.5  # seconds
+        self.timer = self.create_timer(timer_period, self.timer_callback)
+        self.counter = 0
+
+        self.get_logger().info('Simple Publisher started. Publishing to /chatter')
+
+    def timer_callback(self):
+        """Called periodically by the timer to publish a message."""
+        # Create a new String message
+        msg = String()
+        msg.data = f'Hello ROS 2! Message #{self.counter}'
+
+        # Publish the message
+        self.publisher.publish(msg)
+
+        # Log what we published
+        self.get_logger().info(f'Publishing: "{msg.data}"')
+
+        self.counter += 1
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = SimplePublisher()
+
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info('Publisher stopped by user')
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+`}
+</CodePlayground>
+
+### Creating a Subscriber
+
+A subscriber receives messages from a topic:
+
+<CodePlayground language="python" title="simple_subscriber.py">
+{`#!/usr/bin/env python3
+"""
+Simple ROS 2 Subscriber
+=======================
+
+This node demonstrates the subscriber pattern in ROS 2.
+"""
+
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+
+class SimpleSubscriber(Node):
+    """A ROS 2 node that subscribes to string messages on a topic."""
+
+    def __init__(self):
+        super().__init__('simple_subscriber')
+
+        # Create a subscriber
+        # Parameters:
+        #   - Message type: String (must match publisher's type)
+        #   - Topic name: 'chatter' (must match publisher's topic)
+        #   - Callback function: called when a message arrives
+        #   - Queue size: 10
+        self.subscription = self.create_subscription(
+            String,
+            'chatter',
+            self.listener_callback,
+            10
+        )
+        self.subscription  # prevent unused variable warning
+        self.message_count = 0
+
+        self.get_logger().info('Simple Subscriber started. Listening to /chatter')
+
+    def listener_callback(self, msg):
+        """
+        Callback function that processes incoming messages.
+
+        Args:
+            msg (String): The received message
+        """
+        self.message_count += 1
+        self.get_logger().info(f'Received [{self.message_count}]: "{msg.data}"')
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = SimpleSubscriber()
+
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info('Subscriber stopped by user')
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+`}
+</CodePlayground>
+
+### Running Publisher and Subscriber Together
+
+Open two terminals:
+
+**Terminal 1** (Publisher):
+```bash
+python3 simple_publisher.py
+```
+
+**Terminal 2** (Subscriber):
+```bash
+python3 simple_subscriber.py
+```
+
+You should see the publisher sending messages and the subscriber receiving them!
+
+### Inspecting Topics
+
+While the nodes are running, open a third terminal and explore:
+
+```bash
+# List all active topics
+ros2 topic list
+
+# See messages on /chatter topic
+ros2 topic echo /chatter
+
+# Get info about the topic
+ros2 topic info /chatter
+
+# Measure publishing rate
+ros2 topic hz /chatter
+```
+
+<Callout type="tip" title="Debugging Tip">
+If your subscriber isn't receiving messages, check:
+1. Are both nodes running? (`ros2 node list`)
+2. Is the topic name exactly the same? (case-sensitive!)
+3. Is the message type the same? (`ros2 topic info /chatter`)
+4. Are you sourcing the ROS 2 setup in each terminal?
+</Callout>
+
+---
+
+## Message Types and QoS
+
+### Standard Message Types
+
+ROS 2 provides many standard message types in packages like `std_msgs`, `sensor_msgs`, and `geometry_msgs`:
+
+- `std_msgs/String`: Text messages
+- `std_msgs/Int32`, `Float64`: Numbers
+- `sensor_msgs/Image`: Camera images
+- `sensor_msgs/LaserScan`: Lidar data
+- `geometry_msgs/Twist`: Velocity commands
+- `geometry_msgs/Pose`: Position and orientation
+
+**Using different message types**:
+
+```python
+from sensor_msgs.msg import Image
+from geometry_msgs.msg import Twist
+
+# Create a publisher for velocity commands
+self.cmd_vel_pub = self.create_publisher(Twist, 'cmd_vel', 10)
+
+# Create a subscriber for camera images
+self.image_sub = self.create_subscription(
+    Image,
+    'camera/image',
+    self.image_callback,
+    10
+)
+```
+
+### Quality of Service (QoS)
+
+**QoS** (Quality of Service) policies control how messages are delivered. The queue size (`10` in our examples) is one QoS parameter, but there are many others:
+
+- **Reliability**: Best effort vs reliable delivery
+- **Durability**: Transient local (keep last message for late joiners) vs volatile
+- **History**: Keep last N messages vs keep all
+- **Lifespan**: How long messages are valid
+
+**Example with custom QoS**:
+
+```python
+from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
+
+# Create a QoS profile for sensor data (best effort, keep last 10)
+qos_profile = QoSProfile(
+    reliability=ReliabilityPolicy.BEST_EFFORT,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=10
+)
+
+# Use it when creating a publisher
+self.publisher = self.create_publisher(
+    LaserScan,
+    'scan',
+    qos_profile
+)
+```
+
+We'll explore QoS in more detail in Chapter 4.
+
+---
+
+## Assessment
+
+<Quiz
+  title="Chapter 3 Quiz"
+  questions={[
+    {
+      id: 'q1',
+      question: 'What is a ROS 2 node?',
+      options: [
+        'A single-purpose process that performs one specific task',
+        'A message type',
+        'A topic for communication',
+        'A configuration file'
+      ],
+      correctAnswer: 0,
+      explanation: 'A node is a single-purpose process in ROS 2. Each node should do one thing well, making systems modular and easier to develop, test, and maintain.'
+    },
+    {
+      id: 'q2',
+      question: 'What is the publish-subscribe pattern used for in ROS 2?',
+      options: [
+        'Synchronous request-response communication',
+        'Asynchronous, many-to-many communication for continuous data streams',
+        'Long-running tasks with feedback',
+        'Runtime configuration'
+      ],
+      correctAnswer: 1,
+      explanation: 'Topics use the publish-subscribe pattern for asynchronous, many-to-many communication. This is ideal for continuous data streams like sensor readings where multiple nodes may need the same data.'
+    },
+    {
+      id: 'q3',
+      question: 'When should you use services instead of topics?',
+      options: [
+        'For continuous sensor data streams',
+        'For occasional operations that need a response',
+        'For long-running tasks',
+        'For configuration values'
+      ],
+      correctAnswer: 1,
+      explanation: 'Services provide synchronous request-response communication and are best for occasional operations that need a result, like computing a path or querying state.'
+    },
+    {
+      id: 'q4',
+      question: 'What does rclpy.spin() do?',
+      options: [
+        'Creates a new node',
+        'Publishes a message',
+        'Blocks and processes callbacks until shutdown',
+        'Initializes ROS 2'
+      ],
+      correctAnswer: 2,
+      explanation: 'rclpy.spin() blocks and processes callbacks (timers, subscribers, services) until the node is shut down. Without it, callbacks would not execute.'
+    },
+    {
+      id: 'q5',
+      question: 'What is Quality of Service (QoS) in ROS 2?',
+      options: [
+        'A measure of code quality',
+        'Policies that control how messages are delivered',
+        'The speed of message transmission',
+        'A debugging tool'
+      ],
+      correctAnswer: 1,
+      explanation: 'QoS (Quality of Service) policies control how messages are delivered, including reliability, durability, history, and lifespan settings.'
+    },
+    {
+      id: 'q6',
+      question: 'What command lists all running ROS 2 nodes?',
+      options: [
+        'ros2 list nodes',
+        'ros2 node list',
+        'ros2 show nodes',
+        'ros2 nodes'
+      ],
+      correctAnswer: 1,
+      explanation: 'The command "ros2 node list" displays all currently running nodes in the ROS 2 graph.'
+    }
+  ]}
+/>
+
+---
+
+## Learning Checkpoint
+
+<Checkpoint
+  title="Chapter 3 Mastery Checklist"
+  items={[
+    { id: 'architecture', text: 'I can explain ROS 2 architecture and its key components' },
+    { id: 'create-node', text: 'I can create and run a basic ROS 2 node in Python' },
+    { id: 'publisher', text: 'I can implement a publisher to send messages' },
+    { id: 'subscriber', text: 'I can implement a subscriber to receive messages' },
+    { id: 'graph', text: 'I understand the ROS 2 graph and can inspect it' },
+    { id: 'debug', text: 'I can debug ROS 2 nodes using command-line tools' }
+  ]}
+  storageKey="chapter-03-checkpoint"
+/>
+
+---
+
+## Summary
+
+**Key Takeaways:**
+
+- **ROS 2** is the industry-standard middleware for robotics, providing communication infrastructure and tools
+- **Nodes** are single-purpose processes that form the building blocks of robot systems
+- **Topics** enable asynchronous pub-sub communication for continuous data streams
+- **Services** provide synchronous request-response for occasional operations
+- **Actions** handle long-running tasks with feedback and cancellation
+- **The ROS 2 graph** visualizes the network of nodes and their connections
+- **QoS policies** control message delivery characteristics
+
+**Core Patterns:**
+- One node, one purpose (modularity)
+- Publish-subscribe for sensor data and state
+- Request-response for queries and commands
+- Timers for periodic behaviors
+
+---
+
+## What's Next?
+
+In **Chapter 4: ROS 2 Communication Patterns**, we'll dive deeper into:
+- Advanced topic usage with custom message types
+- Services and action servers
+- Lifecycle management for robust nodes
+- Quality of Service configuration
+- Launch files for multi-node systems
+
+You'll build more complex robot behaviors and learn professional ROS 2 development practices.
+
+---
+
+## References
+
+Macenski, S., Foote, T., Gerkey, B., Lalancette, C., & Woodall, W. (2022). Robot Operating System 2: Design, architecture, and uses in the wild. *Science Robotics*, 7(66). https://doi.org/10.1126/scirobotics.abm6074
+
+Open Robotics. (2023). *ROS 2 Documentation: Humble Hawksbill*. Retrieved from https://docs.ros.org/en/humble/
+
+Object Management Group. (2015). *Data Distribution Service (DDS) Specification*. Retrieved from https://www.omg.org/spec/DDS/

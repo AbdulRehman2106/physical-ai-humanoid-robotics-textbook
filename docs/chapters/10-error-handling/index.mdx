@@ -1,0 +1,734 @@
+---
+sidebar_position: 10
+title: Error Handling and Robustness
+description: Build production-ready robot systems with failure detection, recovery strategies, and graceful degradation
+---
+
+# Error Handling and Robustness
+
+import Callout from '@site/src/components/Callout';
+import CodePlayground from '@site/src/components/CodePlayground';
+import Quiz from '@site/src/components/Quiz';
+import Checkpoint from '@site/src/components/Checkpoint';
+
+## Learning Outcomes
+
+By the end of this chapter, you will be able to:
+
+- **Identify failure modes** in robot systems and their causes
+- **Implement error detection** using sensors and monitoring
+- **Design recovery strategies** for common failure scenarios
+- **Build graceful degradation** into robot behaviors
+- **Apply robustness principles** for production-ready systems
+
+## Prerequisites
+
+- Chapters 1-9: Complete technical foundation
+- Understanding of ROS 2 and robot systems
+- Experience with simulation and real robots (helpful)
+
+---
+
+## Introduction
+
+You've learned to build robots (ROS 2), simulate them (Gazebo/Isaac), train AI models (VLA), and transfer to real hardware (sim-to-real). But there's a critical gap between a working demo and a production system: **robustness**.
+
+Real robots fail. Sensors drop out. Motors stall. Networks disconnect. Objects move unexpectedly. A research demo that works 80% of the time is impressive. A production system that fails 20% of the time is unacceptable.
+
+<Callout type="info" title="The Cost of Failures">
+In production robotics:
+- **Warehouse robots**: Downtime costs $1000s per hour
+- **Autonomous vehicles**: Failures risk human safety
+- **Surgical robots**: Errors can be life-threatening
+- **Manufacturing**: Failed grasps waste materials and time
+
+Robustness isn't optional—it's essential for deployment.
+</Callout>
+
+This chapter teaches you to build systems that detect failures, recover gracefully, and operate reliably in the real world.
+
+---
+
+## Common Failure Modes
+
+Understanding what can go wrong is the first step to handling it.
+
+### 1. Sensor Failures
+
+**Dropout**: Sensor stops publishing data
+- Camera disconnects
+- Lidar loses power
+- IMU communication failure
+
+**Noise/Corruption**: Data becomes unreliable
+- Camera motion blur
+- Lidar reflections from glass
+- IMU drift accumulation
+
+**Calibration Drift**: Sensor accuracy degrades over time
+- Camera intrinsics change (temperature, vibration)
+- Lidar alignment shifts
+- Force sensor zero-point drift
+
+**Detection**: Monitor data rate, check for outliers, validate against expected ranges
+
+### 2. Actuator Failures
+
+**Motor Stall**: Motor can't produce required torque
+- Overload (carrying too much weight)
+- Mechanical jam (object stuck in joint)
+- Power supply insufficient
+
+**Joint Limits**: Robot reaches physical limits
+- Commanded position exceeds joint range
+- Singularities in inverse kinematics
+- Collision with environment
+
+**Power Loss**: Battery depleted or power interrupted
+- Battery voltage drops below threshold
+- Circuit breaker trips
+- Cable disconnection
+
+**Detection**: Monitor motor current, position error, velocity tracking
+
+### 3. Communication Failures
+
+**Network Loss**: ROS 2 communication interrupted
+- WiFi disconnection
+- Ethernet cable unplugged
+- Network congestion
+
+**Latency Spikes**: Messages delayed beyond acceptable bounds
+- Network congestion
+- CPU overload
+- Disk I/O blocking
+
+**Message Loss**: Published messages don't reach subscribers
+- QoS mismatch (Chapter 4)
+- Buffer overflow
+- Network packet loss
+
+**Detection**: Heartbeat messages, timeout monitoring, QoS event callbacks
+
+### 4. Planning Failures
+
+**No Path Found**: Planner can't find valid path
+- Goal unreachable (blocked by obstacles)
+- Start state invalid (in collision)
+- Planning timeout exceeded
+
+**Collision Detected**: Planned path would cause collision
+- Dynamic obstacles moved into path
+- Map outdated
+- Perception error (false positive)
+
+**Execution Failure**: Can't follow planned path
+- Actuator limits exceeded
+- Slippage on terrain
+- External disturbance
+
+**Detection**: Planner return codes, collision checking, trajectory tracking error
+
+### 5. Perception Failures
+
+**Object Not Detected**: Vision system misses target object
+- Occlusion (object hidden)
+- Poor lighting
+- Object outside field of view
+
+**Misclassification**: Wrong object identified
+- Similar appearance
+- Novel object (not in training data)
+- Sensor noise
+
+**Pose Estimation Error**: Object position/orientation wrong
+- Depth sensor noise
+- Symmetry ambiguity
+- Partial occlusion
+
+**Detection**: Confidence scores, multi-sensor fusion, temporal consistency
+
+<Callout type="insight" title="Failure Mode Taxonomy">
+Most failures fall into these categories:
+- **Transient**: Temporary (network glitch) → Retry
+- **Intermittent**: Recurring (loose cable) → Diagnose and fix
+- **Permanent**: Persistent (broken sensor) → Graceful degradation
+- **Catastrophic**: Immediate danger → Emergency stop
+
+Understanding the failure type guides your recovery strategy.
+</Callout>
+
+---
+
+## Error Detection
+
+You can't recover from failures you don't detect. Let's implement monitoring.
+
+### Sensor Health Monitoring
+
+<CodePlayground language="python" title="sensor_monitor.py">
+{`#!/usr/bin/env python3
+"""
+Sensor Health Monitor
+=====================
+
+Monitors sensor health and detects failures.
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image, LaserScan
+from std_msgs.msg import Bool
+import time
+
+
+class SensorMonitor(Node):
+    """Monitors sensor health and publishes status."""
+
+    def __init__(self):
+        super().__init__('sensor_monitor')
+
+        # Sensor status publishers
+        self.camera_status_pub = self.create_publisher(Bool, '/health/camera', 10)
+        self.lidar_status_pub = self.create_publisher(Bool, '/health/lidar', 10)
+
+        # Sensor subscribers
+        self.camera_sub = self.create_subscription(
+            Image, '/camera/image_raw', self.camera_callback, 10
+        )
+        self.lidar_sub = self.create_subscription(
+            LaserScan, '/scan', self.lidar_callback, 10
+        )
+
+        # Last message timestamps
+        self.last_camera_time = time.time()
+        self.last_lidar_time = time.time()
+
+        # Timeout thresholds (seconds)
+        self.camera_timeout = 1.0  # 1 Hz minimum
+        self.lidar_timeout = 0.2   # 5 Hz minimum
+
+        # Health check timer (1 Hz)
+        self.timer = self.create_timer(1.0, self.health_check)
+
+        self.get_logger().info('Sensor Monitor started')
+
+    def camera_callback(self, msg):
+        """Update camera timestamp."""
+        self.last_camera_time = time.time()
+
+        # Additional checks: image size, encoding, etc.
+        if msg.width == 0 or msg.height == 0:
+            self.get_logger().warn('Camera: Invalid image dimensions')
+
+    def lidar_callback(self, msg):
+        """Update lidar timestamp."""
+        self.last_lidar_time = time.time()
+
+        # Additional checks: range validity, number of points
+        valid_ranges = [r for r in msg.ranges
+                       if msg.range_min <= r <= msg.range_max]
+
+        if len(valid_ranges) < len(msg.ranges) * 0.5:
+            self.get_logger().warn('Lidar: >50% invalid ranges')
+
+    def health_check(self):
+        """Check sensor health and publish status."""
+        current_time = time.time()
+
+        # Check camera
+        camera_healthy = (current_time - self.last_camera_time) < self.camera_timeout
+        camera_msg = Bool()
+        camera_msg.data = camera_healthy
+        self.camera_status_pub.publish(camera_msg)
+
+        if not camera_healthy:
+            self.get_logger().error(
+                f'Camera FAILURE: No data for {current_time - self.last_camera_time:.1f}s'
+            )
+
+        # Check lidar
+        lidar_healthy = (current_time - self.last_lidar_time) < self.lidar_timeout
+        lidar_msg = Bool()
+        lidar_msg.data = lidar_healthy
+        self.lidar_status_pub.publish(lidar_msg)
+
+        if not lidar_healthy:
+            self.get_logger().error(
+                f'Lidar FAILURE: No data for {current_time - self.last_lidar_time:.1f}s'
+            )
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    monitor = SensorMonitor()
+
+    try:
+        rclpy.spin(monitor)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        monitor.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+`}
+</CodePlayground>
+
+### Model-Based Detection
+
+Compare expected state (from model) with actual state (from sensors):
+
+```python
+# Expected position after 1 second at 1 m/s
+expected_position = current_position + velocity * dt
+
+# Actual position from sensors
+actual_position = get_position_from_sensors()
+
+# Error
+error = abs(actual_position - expected_position)
+
+if error > threshold:
+    # Anomaly detected (slippage, collision, etc.)
+    handle_anomaly()
+```
+
+---
+
+## Recovery Strategies
+
+Once you detect a failure, how do you recover?
+
+### 1. Retry with Backoff
+
+For transient failures, retry with increasing delays:
+
+<CodePlayground language="python" title="retry_with_backoff.py">
+{`import time
+import random
+
+
+def retry_with_backoff(func, max_retries=3, base_delay=1.0):
+    """
+    Retry a function with exponential backoff.
+
+    Args:
+        func: Function to retry
+        max_retries: Maximum number of attempts
+        base_delay: Initial delay in seconds
+
+    Returns:
+        Result of func if successful
+
+    Raises:
+        Exception if all retries fail
+    """
+    for attempt in range(max_retries):
+        try:
+            result = func()
+            return result
+        except Exception as e:
+            if attempt == max_retries - 1:
+                # Last attempt failed, re-raise
+                raise e
+
+            # Calculate delay with exponential backoff + jitter
+            delay = base_delay * (2 ** attempt) + random.uniform(0, 1)
+
+            print(f'Attempt {attempt + 1} failed: {e}')
+            print(f'Retrying in {delay:.1f}s...')
+            time.sleep(delay)
+
+
+# Example usage
+def unreliable_service_call():
+    """Simulates an unreliable service call."""
+    if random.random() < 0.7:  # 70% failure rate
+        raise Exception('Service call failed')
+    return 'Success'
+
+
+# Retry the call
+try:
+    result = retry_with_backoff(unreliable_service_call)
+    print(f'Result: {result}')
+except Exception as e:
+    print(f'All retries failed: {e}')
+`}
+</CodePlayground>
+
+### 2. Fallback Behaviors
+
+When primary behavior fails, switch to fallback:
+
+```python
+def navigate_to_goal(goal):
+    """Navigate with fallback strategies."""
+
+    # Try primary planner (fast but may fail)
+    try:
+        path = fast_planner.plan(goal)
+        return execute_path(path)
+    except PlanningFailed:
+        logger.warn('Fast planner failed, trying slow planner')
+
+    # Fallback: slow but more robust planner
+    try:
+        path = robust_planner.plan(goal)
+        return execute_path(path)
+    except PlanningFailed:
+        logger.error('All planners failed')
+
+    # Final fallback: request human assistance
+    request_human_help(goal)
+    return False
+```
+
+### 3. Safe Stop
+
+When recovery isn't possible, stop safely:
+
+```python
+def safe_stop():
+    """Bring robot to safe stop."""
+
+    # 1. Stop all motion
+    publish_zero_velocity()
+
+    # 2. Engage brakes (if available)
+    engage_brakes()
+
+    # 3. Disable actuators
+    disable_motors()
+
+    # 4. Notify operators
+    send_alert('Robot stopped due to failure')
+
+    # 5. Log state for debugging
+    log_robot_state()
+```
+
+### 4. Replanning
+
+When execution fails, replan from current state:
+
+```python
+def execute_with_replanning(goal):
+    """Execute plan with replanning on failure."""
+
+    max_replans = 3
+    replans = 0
+
+    while replans < max_replans:
+        # Plan from current position
+        current_pos = get_current_position()
+        path = planner.plan(current_pos, goal)
+
+        # Execute path
+        success = execute_path(path)
+
+        if success:
+            return True
+
+        # Execution failed, replan
+        replans += 1
+        logger.warn(f'Execution failed, replanning ({replans}/{max_replans})')
+
+    # All replans failed
+    logger.error('Replanning limit exceeded')
+    return False
+```
+
+<Callout type="tip" title="When to Retry vs Stop">
+**Retry when:**
+- Failure is likely transient (network glitch)
+- Retry is safe (no collision risk)
+- Time permits (not time-critical)
+
+**Stop when:**
+- Failure is permanent (broken sensor)
+- Retry is unsafe (near obstacles)
+- Time-critical (emergency situation)
+</Callout>
+
+---
+
+## Graceful Degradation
+
+Instead of complete failure, operate with reduced functionality.
+
+### Sensor Fusion Fallbacks
+
+```python
+def get_robot_pose():
+    """Get robot pose with sensor fusion fallbacks."""
+
+    # Primary: GPS + IMU fusion
+    if gps_healthy and imu_healthy:
+        return fuse_gps_imu()
+
+    # Fallback 1: Dead reckoning with IMU only
+    elif imu_healthy:
+        logger.warn('GPS failed, using dead reckoning')
+        return dead_reckoning_from_imu()
+
+    # Fallback 2: Last known position (degraded mode)
+    else:
+        logger.error('All localization sensors failed')
+        return last_known_pose  # Stale but better than nothing
+```
+
+### Reduced Functionality Mode
+
+```python
+class RobotController:
+    """Robot controller with degraded operation modes."""
+
+    def __init__(self):
+        self.mode = 'FULL'  # FULL, DEGRADED, SAFE_STOP
+
+    def update_mode(self):
+        """Update operation mode based on sensor health."""
+
+        if all_sensors_healthy():
+            self.mode = 'FULL'
+        elif critical_sensors_healthy():
+            self.mode = 'DEGRADED'
+            self.notify_user('Operating in degraded mode')
+        else:
+            self.mode = 'SAFE_STOP'
+            self.safe_stop()
+
+    def execute_task(self, task):
+        """Execute task according to current mode."""
+
+        if self.mode == 'FULL':
+            return self.execute_full_speed(task)
+        elif self.mode == 'DEGRADED':
+            return self.execute_slow_and_careful(task)
+        else:
+            return False  # Can't execute in SAFE_STOP
+```
+
+---
+
+## Robustness by Design
+
+Build robustness in from the start.
+
+### Defensive Programming
+
+**Input Validation:**
+```python
+def move_to_position(x, y, z):
+    """Move to position with input validation."""
+
+    # Validate inputs
+    if not (-10 <= x <= 10):
+        raise ValueError(f'x={x} out of workspace bounds')
+    if not (-10 <= y <= 10):
+        raise ValueError(f'y={y} out of workspace bounds')
+    if not (0 <= z <= 2):
+        raise ValueError(f'z={z} out of workspace bounds')
+
+    # Check for NaN/Inf
+    if not all(math.isfinite(v) for v in [x, y, z]):
+        raise ValueError('Position contains NaN or Inf')
+
+    # Execute motion
+    execute_motion(x, y, z)
+```
+
+**Timeout Handling:**
+```python
+def call_service_with_timeout(service_name, request, timeout=5.0):
+    """Call ROS 2 service with timeout."""
+
+    client = create_client(service_name)
+
+    if not client.wait_for_service(timeout_sec=timeout):
+        raise TimeoutError(f'Service {service_name} not available')
+
+    future = client.call_async(request)
+
+    # Wait with timeout
+    start_time = time.time()
+    while not future.done():
+        if time.time() - start_time > timeout:
+            raise TimeoutError(f'Service call to {service_name} timed out')
+        time.sleep(0.01)
+
+    return future.result()
+```
+
+### Resource Management
+
+**Memory:**
+```python
+# Limit buffer sizes
+MAX_BUFFER_SIZE = 1000
+
+class DataBuffer:
+    def __init__(self):
+        self.data = []
+
+    def add(self, item):
+        self.data.append(item)
+
+        # Prevent unbounded growth
+        if len(self.data) > MAX_BUFFER_SIZE:
+            self.data.pop(0)  # Remove oldest
+```
+
+**CPU:**
+```python
+# Rate limiting
+rate = create_rate(10)  # 10 Hz max
+
+while running:
+    process_data()
+    rate.sleep()  # Prevent CPU overload
+```
+
+---
+
+## Assessment
+
+<Quiz
+  title="Chapter 10 Quiz"
+  questions={[
+    {
+      id: 'q1',
+      question: 'What are the main categories of robot failures?',
+      options: [
+        'Only sensor failures',
+        'Sensor, actuator, communication, planning, and perception failures',
+        'Only hardware failures',
+        'Only software failures'
+      ],
+      correctAnswer: 1,
+      explanation: 'Robot failures span multiple categories: sensor failures (dropout, noise), actuator failures (stall, limits), communication failures (network loss), planning failures (no path), and perception failures (misdetection).'
+    },
+    {
+      id: 'q2',
+      question: 'How do you detect sensor failures?',
+      options: [
+        'Wait for the robot to crash',
+        'Monitor data rate, check for outliers, validate against expected ranges',
+        'Only check at startup',
+        'Sensors never fail'
+      ],
+      correctAnswer: 1,
+      explanation: 'Sensor failures are detected by monitoring data rate (timeout detection), checking for outliers (noise detection), and validating against expected ranges (sanity checks).'
+    },
+    {
+      id: 'q3',
+      question: 'When should you retry a failed operation?',
+      options: [
+        'Always retry indefinitely',
+        'Never retry',
+        'Retry when failure is likely transient, retry is safe, and time permits',
+        'Only retry once'
+      ],
+      correctAnswer: 2,
+      explanation: 'Retry when: (1) failure is likely transient (network glitch), (2) retry is safe (no collision risk), and (3) time permits (not time-critical). Otherwise, stop or use fallback.'
+    },
+    {
+      id: 'q4',
+      question: 'What is graceful degradation?',
+      options: [
+        'Complete system shutdown',
+        'Operating with reduced functionality instead of complete failure',
+        'Ignoring errors',
+        'Running at full speed despite failures'
+      ],
+      correctAnswer: 1,
+      explanation: 'Graceful degradation means operating with reduced functionality when some components fail, rather than complete shutdown. Example: using dead reckoning when GPS fails.'
+    },
+    {
+      id: 'q5',
+      question: 'What is defensive programming?',
+      options: [
+        'Writing code that attacks errors',
+        'Validating inputs, handling timeouts, and managing resources proactively',
+        'Avoiding error handling',
+        'Only handling expected errors'
+      ],
+      correctAnswer: 1,
+      explanation: 'Defensive programming means proactively validating inputs, handling timeouts, managing resources (memory, CPU), and anticipating failure modes before they occur.'
+    },
+    {
+      id: 'q6',
+      question: 'What should you do when all recovery strategies fail?',
+      options: [
+        'Keep trying indefinitely',
+        'Ignore the failure',
+        'Execute safe stop and notify operators',
+        'Restart the robot'
+      ],
+      correctAnswer: 2,
+      explanation: 'When all recovery strategies fail, execute a safe stop (stop motion, engage brakes, disable motors), notify operators, and log state for debugging.'
+    }
+  ]}
+/>
+
+---
+
+## Learning Checkpoint
+
+<Checkpoint
+  title="Chapter 10 Mastery Checklist"
+  items={[
+    { id: 'failures', text: 'I can identify common failure modes in robot systems' },
+    { id: 'detection', text: 'I can implement error detection using monitoring' },
+    { id: 'recovery', text: 'I can design recovery strategies (retry, fallback, replan)' },
+    { id: 'degradation', text: 'I understand graceful degradation principles' },
+    { id: 'robustness', text: 'I can apply defensive programming and resource management' },
+    { id: 'testing', text: 'I know how to test for robustness' }
+  ]}
+  storageKey="chapter-10-checkpoint"
+/>
+
+---
+
+## Summary
+
+**Key Takeaways:**
+
+- **Failure modes**: Sensor, actuator, communication, planning, perception
+- **Detection**: Monitor data rates, validate ranges, check consistency
+- **Recovery**: Retry (transient), fallback (alternatives), replan (execution), safe stop (last resort)
+- **Graceful degradation**: Reduced functionality > complete failure
+- **Robustness by design**: Input validation, timeout handling, resource management
+
+**Best Practices:**
+- Detect failures early with monitoring
+- Have multiple recovery strategies
+- Fail safely when recovery isn't possible
+- Log everything for debugging
+- Test failure scenarios systematically
+
+---
+
+## What's Next?
+
+In **Chapter 11: Capstone Project**, you'll integrate everything:
+- Design a complete autonomous humanoid system
+- Implement vision, planning, and control
+- Test in simulation and deploy to hardware
+- Apply all techniques from Chapters 1-10
+
+This is your opportunity to build a real Physical AI system from scratch.
+
+---
+
+## References
+
+Carlson, J., Murphy, R. R., & Nelson, A. (2004). Follow-up analysis of mobile robot failures. In *2004 IEEE International Conference on Robotics and Automation (ICRA)*.
+
+Steinbauer, G., & Wotawa, F. (2005). Detecting and locating faults in the control software of autonomous mobile robots. In *IJCAI*.
+
+Koopman, P., & Wagner, M. (2016). Challenges in autonomous vehicle testing and validation. *SAE International Journal of Transportation Safety*, 4(1), 15-24.

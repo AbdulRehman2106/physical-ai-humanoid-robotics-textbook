@@ -1,0 +1,130 @@
+.animatedSection {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+.animatedSection.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fadeIn {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.fadeInUp {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.fadeInDown {
+  animation: fadeInDown 0.6s ease-out forwards;
+}
+
+.fadeInLeft {
+  animation: fadeInLeft 0.6s ease-out forwards;
+}
+
+.fadeInRight {
+  animation: fadeInRight 0.6s ease-out forwards;
+}
+
+.slideUp {
+  animation: slideUp 0.6s ease-out forwards;
+}
+
+.zoomIn {
+  animation: zoomIn 0.6s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zoomIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Stagger delays for multiple elements */
+.animatedSection:nth-child(1) { transition-delay: 0.1s; }
+.animatedSection:nth-child(2) { transition-delay: 0.2s; }
+.animatedSection:nth-child(3) { transition-delay: 0.3s; }
+.animatedSection:nth-child(4) { transition-delay: 0.4s; }
+.animatedSection:nth-child(5) { transition-delay: 0.5s; }
+.animatedSection:nth-child(6) { transition-delay: 0.6s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animatedSection {
+    opacity: 1;
+    transform: none;
+    transition: none;
+    animation: none;
+  }
+}

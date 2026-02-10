@@ -1,0 +1,124 @@
+.container {
+  position: relative;
+  padding: 2rem;
+  background: var(--ifm-background-color);
+  border-radius: 16px;
+  border: 2px solid var(--ifm-color-emphasis-200);
+  margin: 2rem 0;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+  transition: width 0.3s ease;
+}
+
+.container:hover {
+  border-color: var(--ifm-color-primary);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.15);
+}
+
+.container:hover::before {
+  width: 8px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--ifm-color-emphasis-200);
+}
+
+.icon {
+  font-size: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.container:hover .icon {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 6px 24px rgba(102, 126, 234, 0.5);
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--ifm-heading-color);
+  margin: 0;
+}
+
+.content {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.content p:last-child {
+  margin-bottom: 0;
+}
+
+/* Type variants */
+.info {
+  border-left-color: #4facfe;
+}
+
+.info::before {
+  background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.success {
+  border-left-color: #43e97b;
+}
+
+.success::before {
+  background: linear-gradient(180deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.warning {
+  border-left-color: #fa709a;
+}
+
+.warning::before {
+  background: linear-gradient(180deg, #fa709a 0%, #fee140 100%);
+}
+
+.danger {
+  border-left-color: #f5576c;
+}
+
+.danger::before {
+  background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
+}
+
+.tip {
+  border-left-color: #667eea;
+}
+
+.tip::before {
+  background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+}
+
+[data-theme='dark'] .container {
+  background: var(--ifm-background-surface-color);
+  border-color: var(--ifm-color-emphasis-300);
+}
+
+[data-theme='dark'] .container:hover {
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.25);
+}

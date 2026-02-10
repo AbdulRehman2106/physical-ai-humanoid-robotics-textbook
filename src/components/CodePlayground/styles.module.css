@@ -1,0 +1,56 @@
+.codePlayground {
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 1.5rem 0;
+  border: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.codeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background-color: var(--ifm-color-emphasis-100);
+  border-bottom: 1px solid var(--ifm-color-emphasis-300);
+}
+
+.codeTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.copyButton {
+  padding: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+  border: 1px solid var(--ifm-color-emphasis-400);
+  border-radius: 4px;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.copyButton:hover {
+  background-color: var(--ifm-color-emphasis-200);
+}
+
+.copyButton:focus {
+  outline: 2px solid var(--ifm-color-primary);
+  outline-offset: 2px;
+}
+
+.codeContent {
+  position: relative;
+}
+
+.codeContent pre {
+  margin: 0;
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.copied {
+  color: var(--ifm-color-success);
+  font-weight: 600;
+}

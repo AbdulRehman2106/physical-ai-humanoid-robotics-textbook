@@ -1,0 +1,68 @@
+<!-- Sensor-Motor Loop Diagram
+
+     This diagram should illustrate the continuous feedback cycle:
+
+     1. Four Main Stages (circular flow):
+
+        Stage 1: SENSE
+        - Icons: camera, lidar, IMU, tactile sensors
+        - Label: "Perceive environment and robot state"
+        - Visual: sensor rays/waves emanating
+
+        Stage 2: PROCESS
+        - Icons: neural network, decision tree, algorithm symbol
+        - Label: "Analyze data and decide actions"
+        - Visual: data flowing through processing layers
+
+        Stage 3: ACT
+        - Icons: motors, grippers, wheels
+        - Label: "Execute physical actions"
+        - Visual: motion indicators, force arrows
+
+        Stage 4: FEEDBACK
+        - Icons: environment change, state update
+        - Label: "Actions affect world state"
+        - Visual: ripple effect, state transition
+
+     2. Circular Layout:
+        - Clockwise flow with prominent arrows
+        - Center text: "Continuous Loop"
+        - Show multiple timescales (fast/medium/slow loops)
+
+     3. Annotations:
+        - "Milliseconds: Reflexes"
+        - "Seconds: Navigation"
+        - "Minutes: Planning"
+
+     4. Interactive Elements (for web):
+        - Highlight each stage on hover
+        - Show example for each stage
+        - Animate the flow direction
+
+     Visual Style:
+        - Clean, technical diagram style
+        - Use consistent iconography
+        - Color code each stage distinctly
+        - Include timing indicators
+
+     Dimensions: 800x800px (square for circular layout), SVG format
+     Accessibility: Describe the cyclical nature and each stage's role
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" role="img" aria-labelledby="sensor-motor-loop-title sensor-motor-loop-desc">
+  <title id="sensor-motor-loop-title">Sensor-Motor Loop Diagram</title>
+  <desc id="sensor-motor-loop-desc">Circular diagram showing the continuous sensor-motor loop in robotics. The cycle flows clockwise through four stages: Sense (perceive environment with sensors), Process (analyze data and decide actions), Act (execute physical actions with actuators), and Feedback (actions affect environment state). Arrows indicate the continuous nature of this loop, which operates at multiple timescales from milliseconds for reflexes to minutes for planning.</desc>
+
+  <!-- Placeholder content - to be replaced with actual diagram -->
+  <rect width="800" height="800" fill="#f8f9fa"/>
+  <circle cx="400" cy="400" r="300" fill="none" stroke="#333" stroke-width="2" stroke-dasharray="10,5"/>
+  <text x="400" y="400" text-anchor="middle" font-size="24" fill="#333">
+    Sensor-Motor Loop
+  </text>
+  <text x="400" y="440" text-anchor="middle" font-size="16" fill="#666">
+    [Circular diagram to be created]
+  </text>
+  <text x="400" y="470" text-anchor="middle" font-size="14" fill="#666">
+    Sense → Process → Act → Feedback
+  </text>
+</svg>

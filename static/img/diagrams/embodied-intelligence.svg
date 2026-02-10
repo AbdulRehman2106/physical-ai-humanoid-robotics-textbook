@@ -1,0 +1,53 @@
+<!-- Embodied Intelligence Illustration
+
+     This illustration should visualize the concept of embodied intelligence showing:
+
+     1. Central Figure:
+        - Simplified robot or agent silhouette
+        - Highlight the body as integral to intelligence (not just a vessel)
+
+     2. Sensory Systems:
+        - Visual perception (cameras/eyes)
+        - Proprioception (joint sensors, body awareness)
+        - Tactile sensing (touch, force feedback)
+        - Show these as active, bidirectional connections
+
+     3. Environment Interaction:
+        - Objects in the environment
+        - Arrows showing action-perception loops
+        - Demonstrate how body shape constrains and enables actions
+
+     4. Key Concepts Annotated:
+        - "Intelligence emerges from interaction"
+        - "Body shapes cognition"
+        - "No internal world model needed"
+        - "Morphological computation"
+
+     5. Visual Metaphor:
+        - Consider showing contrast between:
+          * Traditional AI: brain in a box with inputs/outputs
+          * Embodied AI: integrated body-mind-environment system
+
+     Visual Style:
+        - Illustrative, not photorealistic
+        - Use flowing lines to show continuous interaction
+        - Color palette: purples and teals for a modern, tech feel
+        - Include subtle motion indicators (dotted lines, arrows)
+
+     Dimensions: 1000x700px, SVG format
+     Accessibility: Detailed alt text describing the interaction loops
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 700" role="img" aria-labelledby="embodied-intelligence-title embodied-intelligence-desc">
+  <title id="embodied-intelligence-title">Embodied Intelligence Illustration</title>
+  <desc id="embodied-intelligence-desc">Illustration showing how intelligence emerges from the interaction between a robot's body, its sensors, and the environment. Arrows indicate continuous sensor-motor loops where perception and action are tightly coupled, demonstrating that the body itself is integral to intelligence rather than just a vessel for computation.</desc>
+
+  <!-- Placeholder content - to be replaced with actual illustration -->
+  <rect width="1000" height="700" fill="#f8f9fa"/>
+  <text x="500" y="350" text-anchor="middle" font-size="24" fill="#333">
+    Embodied Intelligence Illustration
+  </text>
+  <text x="500" y="390" text-anchor="middle" font-size="16" fill="#666">
+    [Illustration to be created showing body-environment interaction]
+  </text>
+</svg>

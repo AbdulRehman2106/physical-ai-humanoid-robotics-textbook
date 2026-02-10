@@ -1,0 +1,22 @@
+.citation {
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0.5rem 0;
+  padding-left: 2rem;
+  text-indent: -2rem;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.citation em {
+  font-style: italic;
+}
+
+.citation a {
+  color: var(--ifm-color-primary);
+  text-decoration: none;
+  word-break: break-all;
+}
+
+.citation a:hover {
+  text-decoration: underline;
+}

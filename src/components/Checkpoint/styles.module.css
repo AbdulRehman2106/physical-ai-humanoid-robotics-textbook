@@ -1,0 +1,111 @@
+.checkpoint {
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 2rem 0;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(59, 130, 246, 0.1) 100%);
+  border: 2px solid var(--ifm-color-primary);
+}
+
+.checkpointHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.checkpointIcon {
+  font-size: 1.5rem;
+}
+
+.checkpointTitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--ifm-color-emphasis-900);
+}
+
+.checkpointContent {
+  margin-bottom: 1.5rem;
+}
+
+.checkpointList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.checkpointItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  background-color: var(--ifm-background-color);
+  border-radius: 6px;
+  border: 1px solid var(--ifm-color-emphasis-300);
+  transition: all 0.2s;
+}
+
+.checkpointItem:hover {
+  border-color: var(--ifm-color-primary);
+  background-color: var(--ifm-color-primary-lightest);
+}
+
+.checkbox {
+  margin-top: 0.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+  cursor: pointer;
+  accent-color: var(--ifm-color-primary);
+}
+
+.itemText {
+  flex: 1;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--ifm-color-emphasis-800);
+}
+
+.itemCompleted {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.progress {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: var(--ifm-background-color);
+  border-radius: 6px;
+  text-align: center;
+}
+
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background-color: var(--ifm-color-emphasis-300);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--ifm-color-primary) 0%, var(--ifm-color-primary-light) 100%);
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.completionMessage {
+  margin-top: 1rem;
+  padding: 1rem;
+  background-color: rgba(16, 185, 129, 0.15);
+  border-left: 4px solid #10b981;
+  border-radius: 6px;
+  font-weight: 600;
+  color: var(--ifm-color-emphasis-900);
+}

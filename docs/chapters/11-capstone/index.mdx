@@ -1,0 +1,907 @@
+---
+sidebar_position: 11
+title: "Capstone Project: Autonomous Humanoid Assistant"
+description: Integrate all concepts to build a complete language-conditioned mobile manipulation system
+---
+
+# Capstone Project: Autonomous Humanoid Assistant
+
+import Callout from '@site/src/components/Callout';
+import CodePlayground from '@site/src/components/CodePlayground';
+import Quiz from '@site/src/components/Quiz';
+import Checkpoint from '@site/src/components/Checkpoint';
+
+## Learning Outcomes
+
+By the end of this chapter, you will be able to:
+
+- **Design a complete autonomous system** integrating vision, language, planning, and control
+- **Implement the system** using ROS 2, simulation, and VLA models
+- **Test systematically** in simulation before hardware deployment
+- **Deploy to real hardware** using sim-to-real transfer techniques
+- **Evaluate performance** and iterate on the design
+
+## Prerequisites
+
+- **All previous chapters** (1-10): This is the integrative capstone
+- ROS 2 development environment
+- Gazebo or Isaac Sim
+- Python programming proficiency
+
+---
+
+## Introduction
+
+Congratulations! You've journeyed through the foundations of Physical AI, mastered ROS 2, explored simulation platforms, learned cutting-edge VLA models, and understood sim-to-real transfer and robustness. Now it's time to put it all together.
+
+In this capstone project, you'll build an **Autonomous Humanoid Assistant**—a mobile manipulator that:
+- Understands natural language instructions ("Pick up the red cup")
+- Perceives its environment using vision
+- Plans and executes manipulation tasks
+- Navigates autonomously
+- Handles errors gracefully
+- Operates reliably in the real world
+
+<Callout type="info" title="What You'll Build">
+**System**: Mobile manipulator with camera, arm, and gripper
+
+**Capabilities**:
+- Language-conditioned object manipulation
+- Autonomous navigation
+- Visual object detection and pose estimation
+- Robust error handling
+
+**Technologies**: ROS 2, Gazebo, VLA models, Nav2, MoveIt2
+</Callout>
+
+This is your opportunity to demonstrate mastery of Physical AI by building a complete, working system.
+
+---
+
+## System Architecture
+
+### High-Level Architecture
+
+Our system consists of five major subsystems:
+
+**1. Perception**
+- Camera input
+- Object detection (YOLO/Detectron2)
+- Pose estimation
+- Scene understanding
+
+**2. Language Understanding**
+- VLA model integration
+- Instruction parsing
+- Task specification
+
+**3. Planning**
+- Task planning (high-level)
+- Motion planning (Nav2 for base, MoveIt2 for arm)
+- Grasp planning
+
+**4. Control**
+- Mobile base control
+- Arm trajectory execution
+- Gripper control
+
+**5. Monitoring**
+- Error detection
+- Recovery behaviors
+- Performance logging
+
+### ROS 2 Node Architecture
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    System Orchestrator                   │
+│              (coordinates all subsystems)                │
+└─────────────────────────────────────────────────────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+│  Perception  │    │   Planning   │    │   Control    │
+│              │    │              │    │              │
+│ - Camera     │    │ - Task plan  │    │ - Base       │
+│ - Detection  │───▶│ - Motion     │───▶│ - Arm        │
+│ - Pose est.  │    │ - Grasp      │    │ - Gripper    │
+└──────────────┘    └──────────────┘    └──────────────┘
+         │                    │                    │
+         └────────────────────┴────────────────────┘
+                              │
+                              ▼
+                    ┌──────────────┐
+                    │  Monitoring  │
+                    │              │
+                    │ - Health     │
+                    │ - Recovery   │
+                    │ - Logging    │
+                    └──────────────┘
+```
+
+### Data Flow
+
+1. **User** provides language instruction
+2. **VLA model** interprets instruction and current scene
+3. **Task planner** breaks down into subtasks
+4. **Motion planner** generates trajectories
+5. **Controllers** execute motions
+6. **Monitors** detect failures and trigger recovery
+
+---
+
+## Phase 1: Simulation Setup
+
+Let's start by creating the simulation environment.
+
+### Robot Model (URDF)
+
+<CodePlayground language="xml" title="mobile_manipulator.urdf">
+{`<?xml version="1.0"?>
+<robot name="mobile_manipulator">
+
+  <!-- Mobile Base -->
+  <link name="base_link">
+    <visual>
+      <geometry>
+        <box size="0.6 0.4 0.2"/>
+      </geometry>
+      <material name="blue">
+        <color rgba="0 0 0.8 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.6 0.4 0.2"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="20.0"/>
+      <inertia ixx="0.2" ixy="0" ixz="0" iyy="0.3" iyz="0" izz="0.4"/>
+    </inertial>
+  </link>
+
+  <!-- Camera Link -->
+  <link name="camera_link">
+    <visual>
+      <geometry>
+        <box size="0.05 0.1 0.05"/>
+      </geometry>
+      <material name="black">
+        <color rgba="0 0 0 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.05 0.1 0.05"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.1"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+    </inertial>
+  </link>
+
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="camera_link"/>
+    <origin xyz="0.3 0 0.15" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Camera Sensor Plugin -->
+  <gazebo reference="camera_link">
+    <sensor type="camera" name="camera">
+      <update_rate>30.0</update_rate>
+      <camera>
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.02</near>
+          <far>10</far>
+        </clip>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <ros>
+          <namespace>/camera</namespace>
+          <remapping>image_raw:=image_raw</remapping>
+          <remapping>camera_info:=camera_info</remapping>
+        </ros>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- Arm (simplified 3-DOF) -->
+  <link name="arm_base_link">
+    <visual>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+      <material name="grey">
+        <color rgba="0.5 0.5 0.5 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder radius="0.05" length="0.1"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.01" ixy="0" ixz="0" iyy="0.01" iyz="0" izz="0.01"/>
+    </inertial>
+  </link>
+
+  <joint name="arm_base_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="arm_base_link"/>
+    <origin xyz="0 0 0.15" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Additional arm links and joints would go here -->
+  <!-- Gripper would be added here -->
+
+  <!-- Wheels (differential drive) -->
+  <!-- Left and right wheels similar to Chapter 6 examples -->
+
+</robot>
+`}
+</CodePlayground>
+
+### Launch File
+
+<CodePlayground language="python" title="capstone_sim.launch.py">
+{`from launch import LaunchDescription
+from launch.actions import IncludeLaunchDescription
+from launch_ros.actions import Node
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+from ament_index_python.packages import get_package_share_directory
+import os
+
+
+def generate_launch_description():
+    """Launch the complete capstone simulation."""
+
+    # Paths
+    pkg_gazebo_ros = get_package_share_directory('gazebo_ros')
+    pkg_capstone = get_package_share_directory('capstone_project')
+
+    # Gazebo
+    gazebo = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_gazebo_ros, 'launch', 'gazebo.launch.py')
+        ),
+        launch_arguments={
+            'world': os.path.join(pkg_capstone, 'worlds', 'manipulation_world.sdf')
+        }.items()
+    )
+
+    # Robot state publisher
+    robot_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        parameters=[{
+            'robot_description': open(
+                os.path.join(pkg_capstone, 'urdf', 'mobile_manipulator.urdf')
+            ).read()
+        }]
+    )
+
+    # Spawn robot
+    spawn_robot = Node(
+        package='gazebo_ros',
+        executable='spawn_entity.py',
+        arguments=[
+            '-entity', 'mobile_manipulator',
+            '-topic', 'robot_description',
+            '-x', '0', '-y', '0', '-z', '0.5'
+        ]
+    )
+
+    # Perception node
+    perception = Node(
+        package='capstone_perception',
+        executable='object_detector',
+        name='object_detector'
+    )
+
+    # VLA control node
+    vla_control = Node(
+        package='capstone_vla',
+        executable='vla_controller',
+        name='vla_controller'
+    )
+
+    # System orchestrator
+    orchestrator = Node(
+        package='capstone_core',
+        executable='system_orchestrator',
+        name='system_orchestrator'
+    )
+
+    # Monitoring
+    monitor = Node(
+        package='capstone_monitoring',
+        executable='health_monitor',
+        name='health_monitor'
+    )
+
+    return LaunchDescription([
+        gazebo,
+        robot_state_publisher,
+        spawn_robot,
+        perception,
+        vla_control,
+        orchestrator,
+        monitor
+    ])
+`}
+</CodePlayground>
+
+---
+
+## Phase 2: Perception Pipeline
+
+### Object Detection Node
+
+<CodePlayground language="python" title="object_detector.py">
+{`#!/usr/bin/env python3
+"""
+Object Detection Node
+=====================
+
+Detects objects in camera images and publishes their poses.
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
+from geometry_msgs.msg import PoseStamped
+from cv_bridge import CvBridge
+import cv2
+import numpy as np
+
+
+class ObjectDetector(Node):
+    """Detects objects using vision and publishes poses."""
+
+    def __init__(self):
+        super().__init__('object_detector')
+
+        self.bridge = CvBridge()
+
+        # Subscribers
+        self.image_sub = self.create_subscription(
+            Image,
+            '/camera/image_raw',
+            self.image_callback,
+            10
+        )
+
+        # Publishers
+        self.detections_pub = self.create_publisher(
+            Detection2DArray,
+            '/detections',
+            10
+        )
+
+        self.pose_pub = self.create_publisher(
+            PoseStamped,
+            '/detected_object_pose',
+            10
+        )
+
+        # In practice, load actual detection model (YOLO, Detectron2)
+        # For this example, we'll use simple color-based detection
+        self.get_logger().info('Object Detector started')
+
+    def image_callback(self, msg):
+        """Process image and detect objects."""
+
+        # Convert ROS image to OpenCV
+        cv_image = self.bridge.imgmsg_to_cv2(msg, 'bgr8')
+
+        # Detect objects (simplified: detect red objects)
+        detections = self.detect_red_objects(cv_image)
+
+        # Publish detections
+        detection_msg = Detection2DArray()
+        detection_msg.header = msg.header
+
+        for det in detections:
+            detection = Detection2D()
+            detection.bbox.center.x = float(det['center'][0])
+            detection.bbox.center.y = float(det['center'][1])
+            detection.bbox.size_x = float(det['size'][0])
+            detection.bbox.size_y = float(det['size'][1])
+
+            # Object hypothesis
+            hypothesis = ObjectHypothesisWithPose()
+            hypothesis.id = 'red_object'
+            hypothesis.score = det['confidence']
+            detection.results.append(hypothesis)
+
+            detection_msg.detections.append(detection)
+
+        self.detections_pub.publish(detection_msg)
+
+        # Estimate 3D pose (simplified)
+        if detections:
+            pose = self.estimate_3d_pose(detections[0], cv_image.shape)
+            self.pose_pub.publish(pose)
+
+    def detect_red_objects(self, image):
+        """
+        Detect red objects using color thresholding.
+
+        In production, use YOLO, Detectron2, or similar.
+        """
+        # Convert to HSV
+        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+
+        # Red color range
+        lower_red = np.array([0, 100, 100])
+        upper_red = np.array([10, 255, 255])
+        mask = cv2.inRange(hsv, lower_red, upper_red)
+
+        # Find contours
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        detections = []
+        for contour in contours:
+            if cv2.contourArea(contour) > 500:  # Minimum area
+                x, y, w, h = cv2.boundingRect(contour)
+                detections.append({
+                    'center': (x + w/2, y + h/2),
+                    'size': (w, h),
+                    'confidence': 0.9
+                })
+
+        return detections
+
+    def estimate_3d_pose(self, detection, image_shape):
+        """
+        Estimate 3D pose from 2D detection.
+
+        In production, use depth camera or stereo vision.
+        """
+        pose = PoseStamped()
+        pose.header.stamp = self.get_clock().now().to_msg()
+        pose.header.frame_id = 'camera_link'
+
+        # Simplified: assume object is 1m away
+        # In practice, use depth sensor or known object size
+        pose.pose.position.x = 1.0
+        pose.pose.position.y = 0.0
+        pose.pose.position.z = 0.0
+
+        pose.pose.orientation.w = 1.0
+
+        return pose
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    detector = ObjectDetector()
+
+    try:
+        rclpy.spin(detector)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        detector.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+`}
+</CodePlayground>
+
+---
+
+## Phase 3: Language-Conditioned Control
+
+### VLA Controller Node
+
+<CodePlayground language="python" title="vla_controller.py">
+{`#!/usr/bin/env python3
+"""
+VLA Controller Node
+===================
+
+Integrates VLA model for language-conditioned control.
+"""
+
+import rclpy
+from rclpy.node import Node
+from sensor_msgs.msg import Image
+from std_msgs.msg import String
+from geometry_msgs.msg import PoseStamped
+from cv_bridge import CvBridge
+
+
+class VLAController(Node):
+    """VLA-based controller for language-conditioned manipulation."""
+
+    def __init__(self):
+        super().__init__('vla_controller')
+
+        self.bridge = CvBridge()
+
+        # Current state
+        self.current_image = None
+        self.current_instruction = None
+        self.detected_objects = {}
+
+        # Subscribers
+        self.image_sub = self.create_subscription(
+            Image, '/camera/image_raw', self.image_callback, 10
+        )
+
+        self.instruction_sub = self.create_subscription(
+            String, '/language_instruction', self.instruction_callback, 10
+        )
+
+        self.detection_sub = self.create_subscription(
+            PoseStamped, '/detected_object_pose', self.detection_callback, 10
+        )
+
+        # Publishers
+        self.action_pub = self.create_publisher(
+            PoseStamped, '/target_pose', 10
+        )
+
+        # Timer for control loop (10 Hz)
+        self.timer = self.create_timer(0.1, self.control_loop)
+
+        self.get_logger().info('VLA Controller started')
+
+    def image_callback(self, msg):
+        """Store latest image."""
+        self.current_image = self.bridge.imgmsg_to_cv2(msg, 'rgb8')
+
+    def instruction_callback(self, msg):
+        """Receive language instruction."""
+        self.current_instruction = msg.data
+        self.get_logger().info(f'Received instruction: {msg.data}')
+
+    def detection_callback(self, msg):
+        """Store detected object poses."""
+        # In practice, maintain dictionary of all detected objects
+        self.detected_objects['target'] = msg
+
+    def control_loop(self):
+        """Main control loop."""
+
+        if self.current_image is None or self.current_instruction is None:
+            return
+
+        # In practice, run VLA model inference here
+        # For this example, use simple rule-based control
+
+        if 'pick up' in self.current_instruction.lower():
+            if 'target' in self.detected_objects:
+                # Publish target pose for manipulation
+                target_pose = self.detected_objects['target']
+                self.action_pub.publish(target_pose)
+                self.get_logger().info('Publishing target pose for pickup')
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    controller = VLAController()
+
+    try:
+        rclpy.spin(controller)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        controller.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+`}
+</CodePlayground>
+
+---
+
+## Phase 4: Integration and Testing
+
+### System Orchestrator
+
+The orchestrator coordinates all subsystems:
+
+```python
+class SystemOrchestrator:
+    """Coordinates perception, planning, and control."""
+
+    def execute_task(self, instruction):
+        """Execute a language instruction."""
+
+        # 1. Perception: Detect objects
+        objects = self.perception.detect_objects()
+
+        # 2. VLA: Interpret instruction and generate plan
+        plan = self.vla.generate_plan(instruction, objects)
+
+        # 3. Planning: Generate motion trajectories
+        trajectories = self.planner.plan_motion(plan)
+
+        # 4. Control: Execute trajectories
+        success = self.controller.execute(trajectories)
+
+        # 5. Monitor: Check for errors
+        if not success:
+            self.recovery.handle_failure()
+
+        return success
+```
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+
+Test each component independently:
+
+```python
+def test_object_detector():
+    """Test object detection."""
+    detector = ObjectDetector()
+
+    # Load test image
+    test_image = load_test_image('red_cup.jpg')
+
+    # Run detection
+    detections = detector.detect_red_objects(test_image)
+
+    # Assert detection found
+    assert len(detections) > 0
+    assert detections[0]['confidence'] > 0.8
+```
+
+### Integration Tests
+
+Test component interactions:
+
+```python
+def test_perception_to_planning():
+    """Test perception → planning pipeline."""
+
+    # Detect object
+    pose = perception.detect_and_localize('red_cup')
+
+    # Plan grasp
+    grasp = planner.plan_grasp(pose)
+
+    # Assert valid grasp
+    assert grasp is not None
+    assert grasp.is_valid()
+```
+
+### Scenario Tests
+
+Test complete tasks:
+
+```python
+def test_pick_and_place():
+    """Test complete pick-and-place task."""
+
+    instruction = "Pick up the red cup and place it on the table"
+
+    success = orchestrator.execute_task(instruction)
+
+    assert success == True
+```
+
+---
+
+## Evaluation Metrics
+
+### Success Rate
+
+```
+Success Rate = (Successful Tasks / Total Tasks) × 100%
+```
+
+**Target**: >80% in simulation, >60% on real hardware
+
+### Execution Time
+
+Measure time from instruction to completion.
+
+**Target**: &lt;30 seconds for simple tasks
+
+### Robustness
+
+Test with perturbations:
+- Object position variation
+- Lighting changes
+- Unexpected obstacles
+
+**Target**: >70% success with perturbations
+
+---
+
+## Final Assessment
+
+<Quiz
+  title="Capstone Project Assessment"
+  questions={[
+    {
+      id: 'q1',
+      question: 'What are the five major subsystems in the autonomous humanoid assistant?',
+      options: [
+        'Hardware, software, network, power, cooling',
+        'Perception, language understanding, planning, control, monitoring',
+        'Vision, audio, touch, smell, taste',
+        'Input, processing, output, storage, communication'
+      ],
+      correctAnswer: 1,
+      explanation: 'The five major subsystems are: Perception (vision), Language Understanding (VLA), Planning (task/motion), Control (execution), and Monitoring (error handling).'
+    },
+    {
+      id: 'q2',
+      question: 'Why do we start with simulation before hardware deployment?',
+      options: [
+        'Simulation is always more accurate',
+        'Hardware is too expensive to use',
+        'To iterate quickly, test safely, and validate before risking real hardware',
+        'Simulation is the final goal'
+      ],
+      correctAnswer: 2,
+      explanation: 'Simulation allows rapid iteration, safe testing of failure scenarios, and validation before deploying to expensive real hardware. It accelerates development and reduces risk.'
+    },
+    {
+      id: 'q3',
+      question: 'What is the role of the system orchestrator?',
+      options: [
+        'To play music',
+        'To coordinate all subsystems and manage task execution',
+        'To monitor only',
+        'To replace all other nodes'
+      ],
+      correctAnswer: 1,
+      explanation: 'The system orchestrator coordinates all subsystems (perception, planning, control, monitoring) and manages the overall task execution flow.'
+    },
+    {
+      id: 'q4',
+      question: 'What should you do when a component fails during integration testing?',
+      options: [
+        'Ignore it and continue',
+        'Restart the entire system',
+        'Isolate the component, debug with unit tests, fix, then re-integrate',
+        'Give up on that component'
+      ],
+      correctAnswer: 2,
+      explanation: 'When integration fails, isolate the failing component, debug it with unit tests, fix the issue, then re-integrate. This systematic approach identifies root causes.'
+    },
+    {
+      id: 'q5',
+      question: 'What is a realistic success rate target for real hardware deployment?',
+      options: [
+        '100% (perfect)',
+        '>60% (good for initial deployment)',
+        '<20% (acceptable)',
+        '50% (coin flip)'
+      ],
+      correctAnswer: 1,
+      explanation: 'For initial real hardware deployment, >60% success rate is realistic and good. Achieving 80-90% requires extensive iteration. 100% is unrealistic for complex tasks.'
+    }
+  ]}
+/>
+
+---
+
+## Project Checklist
+
+<Checkpoint
+  title="Capstone Project Completion"
+  items={[
+    { id: 'phase1', text: 'Phase 1: Simulation environment set up' },
+    { id: 'phase2', text: 'Phase 2: Perception pipeline implemented' },
+    { id: 'phase3', text: 'Phase 3: VLA control integrated' },
+    { id: 'phase4', text: 'Phase 4: Navigation and manipulation working' },
+    { id: 'phase5', text: 'Phase 5: Error handling implemented' },
+    { id: 'phase6', text: 'Phase 6: Testing completed (unit, integration, scenario)' },
+    { id: 'phase7', text: 'Phase 7: (Optional) Hardware deployment successful' },
+    { id: 'evaluation', text: 'System evaluated with metrics' },
+    { id: 'documentation', text: 'Code documented and organized' },
+    { id: 'reflection', text: 'Lessons learned documented' }
+  ]}
+  storageKey="capstone-project-checklist"
+/>
+
+---
+
+## Summary and Reflection
+
+### What You've Accomplished
+
+You've built a complete autonomous system that:
+- Understands natural language
+- Perceives its environment
+- Plans and executes complex tasks
+- Handles errors gracefully
+- Integrates cutting-edge AI (VLA models)
+
+This represents the state-of-the-art in Physical AI and embodied intelligence.
+
+### Key Lessons
+
+**1. Integration is Hard**
+- Individual components may work perfectly
+- Integration reveals interface mismatches, timing issues, and edge cases
+- Systematic testing and debugging are essential
+
+**2. Robustness Matters**
+- Demo systems work 80% of the time
+- Production systems must work >95% of the time
+- Error handling and monitoring are not optional
+
+**3. Sim-to-Real is Critical**
+- Simulation accelerates development
+- Reality gap requires careful transfer techniques
+- Always validate on real hardware
+
+**4. Iteration is Key**
+- First version won't be perfect
+- Measure, analyze, improve, repeat
+- Small improvements compound
+
+### Future Directions
+
+**Immediate Next Steps:**
+- Improve perception (better object detection, depth estimation)
+- Enhance VLA model (fine-tune on your specific tasks)
+- Add more robust error recovery
+- Expand task repertoire
+
+**Advanced Topics:**
+- Multi-robot coordination
+- Long-horizon task planning
+- Learning from human feedback
+- Continual learning and adaptation
+
+### Career Pathways in Physical AI
+
+**Research**: Academia, research labs (Google DeepMind, OpenAI, Meta FAIR)
+**Industry**: Robotics companies (Boston Dynamics, Tesla, Amazon Robotics)
+**Startups**: Emerging Physical AI companies
+**Consulting**: Helping companies adopt robotics and AI
+
+---
+
+## Congratulations!
+
+You've completed the Physical AI and Humanoid Robotics textbook. You now have the knowledge and skills to build intelligent, embodied systems that operate in the real world.
+
+**What's next?**
+- Build your own projects
+- Contribute to open-source robotics
+- Join the Physical AI community
+- Keep learning and pushing boundaries
+
+The future of AI is physical. You're now equipped to help build it.
+
+---
+
+## References
+
+This capstone integrates concepts from all previous chapters. Key references:
+
+Brohan, A., et al. (2023). RT-2: Vision-Language-Action Models Transfer Web Knowledge to Robotic Control.
+
+Macenski, S., et al. (2020). The Marathon 2: A Navigation System. *IEEE/RSJ IROS*.
+
+Chitta, S., et al. (2012). MoveIt! *IEEE Robotics & Automation Magazine*.
+
+Open Robotics. (2023). *ROS 2 Documentation*. https://docs.ros.org/

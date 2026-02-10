@@ -1,0 +1,56 @@
+<!-- Simulation Platform Comparison Matrix
+
+     This diagram should provide a comprehensive comparison of simulation platforms:
+
+     1. Matrix Layout (rows = platforms, columns = criteria):
+
+        **Platforms (rows):**
+        - Gazebo
+        - NVIDIA Isaac Sim
+        - Unity ML-Agents
+        - PyBullet
+        - MuJoCo
+
+        **Criteria (columns):**
+        - ROS Integration (1-5 stars)
+        - Graphics Quality (1-5 stars)
+        - Physics Accuracy (1-5 stars)
+        - AI/ML Tools (1-5 stars)
+        - Performance (1-5 stars)
+        - Learning Curve (easier = more stars)
+        - Cost (free = 5 stars)
+        - Community Size (1-5 stars)
+
+     2. Use Case Recommendations (side panel):
+        - "Best for ROS 2 projects" → Gazebo
+        - "Best for AI training" → Isaac Sim
+        - "Best for RL research" → Unity, PyBullet
+        - "Best for fast physics" → MuJoCo
+
+     3. Visual Style:
+        - Clean table/matrix format
+        - Star ratings clearly visible
+        - Color coding: Green (excellent), Yellow (good), Red (limited)
+        - Platform logos/icons
+        - Decision tree at bottom
+
+     Dimensions: 1400x1000px, SVG format
+     Accessibility: Complete comparison data in text form
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 1000" role="img" aria-labelledby="sim-comparison-title sim-comparison-desc">
+  <title id="sim-comparison-title">Simulation Platform Comparison</title>
+  <desc id="sim-comparison-desc">Comparison matrix of robotics simulation platforms (Gazebo, Isaac Sim, Unity, PyBullet, MuJoCo) across criteria including ROS integration, graphics quality, physics accuracy, AI/ML tools, performance, learning curve, cost, and community size. Includes recommendations for different use cases.</desc>
+
+  <!-- Placeholder content - to be replaced with actual comparison matrix -->
+  <rect width="1400" height="1000" fill="#f8f9fa"/>
+  <text x="700" y="500" text-anchor="middle" font-size="24" fill="#333">
+    Simulation Platform Comparison Matrix
+  </text>
+  <text x="700" y="540" text-anchor="middle" font-size="16" fill="#666">
+    [Detailed comparison matrix to be created]
+  </text>
+  <text x="700" y="570" text-anchor="middle" font-size="14" fill="#666">
+    Gazebo | Isaac Sim | Unity | PyBullet | MuJoCo
+  </text>
+</svg>

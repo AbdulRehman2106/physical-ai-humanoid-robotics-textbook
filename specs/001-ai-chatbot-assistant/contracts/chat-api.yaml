@@ -1,0 +1,346 @@
+openapi: 3.0.0
+info:
+  title: AI Chatbot Assistant API
+  version: 1.0.0
+  description: Conversational AI assistant API with Cohere backend
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: http://localhost:3000
+    description: Development server
+  - url: https://api.example.com
+    description: Production server
+
+paths:
+  /api/chat/conversations:
+    post:
+      summary: Create new conversation
+      description: Initiates a new conversation session with the AI assistant
+      operationId: createConversation
+      tags:
+        - Conversations
+      responses:
+        '201':
+          description: Conversation created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+              example:
+                id: "550e8400-e29b-41d4-a716-446655440000"
+                createdAt: "2026-02-10T12:00:00Z"
+                updatedAt: "2026-02-10T12:00:00Z"
+                messages: []
+                status: "active"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/chat/conversations/{conversationId}/messages:
+    post:
+      summary: Send message to conversation
+      description: Sends a user message and receives an AI assistant response
+      operationId: sendMessage
+      tags:
+        - Messages
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          description: Unique conversation identifier
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                content:
+                  type: string
+                  description: User message content
+                  minLength: 1
+                  maxLength: 10000
+              required:
+                - content
+            example:
+              content: "How do I implement error handling in Python?"
+      responses:
+        '200':
+          description: Assistant response generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Message'
+              example:
+                id: "660e8400-e29b-41d4-a716-446655440001"
+                conversationId: "550e8400-e29b-41d4-a716-446655440000"
+                role: "assistant"
+                content: "Here's how to implement error handling in Python:\n\n1. Use try-except blocks..."
+                timestamp: "2026-02-10T12:00:05Z"
+                metadata:
+                  model: "command-r"
+                  tokens: 150
+                  latency: 1200
+        '400':
+          description: Invalid request (empty content, content too long, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error (Cohere API failure, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/chat/conversations/{conversationId}:
+    get:
+      summary: Get conversation history
+      description: Retrieves complete conversation history including all messages
+      operationId: getConversation
+      tags:
+        - Conversations
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          description: Unique conversation identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Conversation details retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Conversation'
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      summary: End conversation
+      description: Marks conversation as ended and cleans up resources
+      operationId: endConversation
+      tags:
+        - Conversations
+      parameters:
+        - name: conversationId
+          in: path
+          required: true
+          description: Unique conversation identifier
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Conversation ended successfully
+        '404':
+          description: Conversation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/health:
+    get:
+      summary: Health check
+      description: Checks API and Cohere service health
+      operationId: healthCheck
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy, degraded]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  services:
+                    type: object
+                    properties:
+                      cohere:
+                        type: string
+                        enum: [available, unavailable]
+              example:
+                status: "healthy"
+                timestamp: "2026-02-10T12:00:00Z"
+                services:
+                  cohere: "available"
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Conversation:
+      type: object
+      required:
+        - id
+        - createdAt
+        - updatedAt
+        - messages
+        - status
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique conversation identifier
+        createdAt:
+          type: string
+          format: date-time
+          description: Conversation creation timestamp
+        updatedAt:
+          type: string
+          format: date-time
+          description: Last activity timestamp
+        messages:
+          type: array
+          items:
+            $ref: '#/components/schemas/Message'
+          description: Ordered message history
+        context:
+          $ref: '#/components/schemas/Context'
+        status:
+          type: string
+          enum: [active, ended]
+          description: Conversation lifecycle status
+
+    Message:
+      type: object
+      required:
+        - id
+        - conversationId
+        - role
+        - content
+        - timestamp
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique message identifier
+        conversationId:
+          type: string
+          format: uuid
+          description: Parent conversation reference
+        role:
+          type: string
+          enum: [user, assistant]
+          description: Message sender role
+        content:
+          type: string
+          description: Message text content (supports markdown)
+          minLength: 1
+          maxLength: 10000
+        timestamp:
+          type: string
+          format: date-time
+          description: Message creation timestamp
+        metadata:
+          type: object
+          description: Optional metadata (populated for assistant messages)
+          properties:
+            model:
+              type: string
+              description: Cohere model used
+              example: "command-r"
+            tokens:
+              type: integer
+              description: Token count
+              minimum: 0
+            latency:
+              type: integer
+              description: Response time in milliseconds
+              minimum: 0
+
+    Context:
+      type: object
+      required:
+        - conversationId
+        - summary
+        - topics
+        - lastUpdated
+        - tokenCount
+      properties:
+        conversationId:
+          type: string
+          format: uuid
+          description: Parent conversation reference
+        summary:
+          type: string
+          description: Accumulated context summary
+          maxLength: 1000
+        topics:
+          type: array
+          items:
+            type: string
+          description: Identified conversation topics
+          maxItems: 10
+        lastUpdated:
+          type: string
+          format: date-time
+          description: Last context update timestamp
+        tokenCount:
+          type: integer
+          description: Approximate token usage
+          minimum: 0
+
+    Error:
+      type: object
+      required:
+        - error
+        - message
+      properties:
+        error:
+          type: string
+          description: Error type identifier
+          example: "CONVERSATION_NOT_FOUND"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "The requested conversation does not exist"
+        code:
+          type: string
+          description: HTTP status code
+          example: "404"
+        details:
+          type: object
+          description: Additional error context
+          additionalProperties: true
+
+tags:
+  - name: Conversations
+    description: Conversation management endpoints
+  - name: Messages
+    description: Message exchange endpoints
+  - name: System
+    description: System health and status endpoints

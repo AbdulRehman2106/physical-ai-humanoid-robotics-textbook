@@ -1,0 +1,734 @@
+---
+sidebar_position: 4
+title: ROS 2 Communication Patterns
+description: Master services, actions, QoS policies, and lifecycle management for robust robot systems
+---
+
+# ROS 2 Communication Patterns
+
+import Callout from '@site/src/components/Callout';
+import CodePlayground from '@site/src/components/CodePlayground';
+import Quiz from '@site/src/components/Quiz';
+import Checkpoint from '@site/src/components/Checkpoint';
+
+## Learning Outcomes
+
+By the end of this chapter, you will be able to:
+
+- **Implement services** for request-response communication
+- **Create action servers and clients** for long-running tasks
+- **Configure Quality of Service (QoS)** policies for different scenarios
+- **Manage node lifecycle** for robust system behavior
+- **Design communication architectures** choosing appropriate patterns
+
+## Prerequisites
+
+- Chapter 3: ROS 2 Fundamentals
+- Understanding of publisher-subscriber pattern
+- Python programming experience
+
+---
+
+## Introduction
+
+In Chapter 3, we learned about topics and the publish-subscribe pattern—perfect for continuous data streams like sensor readings. But robotics systems need more than just pub-sub. What if you need to:
+
+- **Request a computation** and wait for the result? (e.g., "compute a path to this goal")
+- **Start a long-running task** and monitor its progress? (e.g., "navigate to this location")
+- **Control message delivery** based on network conditions? (e.g., reliable vs best-effort)
+- **Manage node startup and shutdown** gracefully? (e.g., configure before activating)
+
+This chapter covers the communication patterns and tools that make these scenarios possible.
+
+<Callout type="info" title="Chapter Roadmap">
+We'll explore services (request-response), actions (goal-based tasks), Quality of Service configuration, and lifecycle management. By the end, you'll know how to choose and implement the right pattern for any robotics scenario.
+</Callout>
+
+---
+
+## Services: Request-Response Pattern
+
+**Services** provide synchronous, one-to-one communication where a client sends a request and waits for a response from a server.
+
+### When to Use Services
+
+Use services when:
+- You need a response to your request
+- The operation is occasional (not continuous)
+- Timing is not critical (you can wait for the response)
+- You want to know if the operation succeeded
+
+**Examples:**
+- Compute a path to a goal
+- Trigger a calibration routine
+- Query the current robot state
+- Save a map to disk
+
+**Don't use services for:**
+- Continuous data streams (use topics)
+- Long-running tasks (use actions)
+- Time-critical operations (use topics with callbacks)
+
+### Service Anatomy
+
+A service has two parts:
+1. **Request**: Data sent from client to server
+2. **Response**: Data returned from server to client
+
+Standard service types include:
+- `std_srvs/SetBool`: Set a boolean value
+- `std_srvs/Trigger`: Trigger an operation (no parameters)
+- `example_interfaces/AddTwoInts`: Add two integers (for learning)
+
+### Creating a Service Server
+
+Let's create a simple service that adds two numbers:
+
+<CodePlayground language="python" title="add_service_server.py">
+{`#!/usr/bin/env python3
+"""
+Service Server Example
+=====================
+
+This node provides a service that adds two integers.
+"""
+
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import AddTwoInts
+
+
+class AddTwoIntsServer(Node):
+    """Service server that adds two integers."""
+
+    def __init__(self):
+        super().__init__('add_two_ints_server')
+
+        # Create a service
+        # Parameters:
+        #   - Service type: AddTwoInts
+        #   - Service name: 'add_two_ints'
+        #   - Callback function: called when request arrives
+        self.srv = self.create_service(
+            AddTwoInts,
+            'add_two_ints',
+            self.add_two_ints_callback
+        )
+
+        self.get_logger().info('Add Two Ints service ready')
+
+    def add_two_ints_callback(self, request, response):
+        """
+        Service callback that processes the request.
+
+        Args:
+            request: Contains request.a and request.b
+            response: Object to fill with result
+
+        Returns:
+            response: Filled response object
+        """
+        # Perform the computation
+        response.sum = request.a + request.b
+
+        # Log the operation
+        self.get_logger().info(
+            f'Request: {request.a} + {request.b} = {response.sum}'
+        )
+
+        # Return the response
+        return response
+
+
+def main(args=None):
+    rclpy.init(args=args)
+    node = AddTwoIntsServer()
+
+    try:
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        node.get_logger().info('Server stopped')
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+`}
+</CodePlayground>
+
+### Creating a Service Client
+
+Now let's create a client that calls this service:
+
+<CodePlayground language="python" title="add_service_client.py">
+{`#!/usr/bin/env python3
+"""
+Service Client Example
+=====================
+
+This node calls the add_two_ints service.
+"""
+
+import sys
+import rclpy
+from rclpy.node import Node
+from example_interfaces.srv import AddTwoInts
+
+
+class AddTwoIntsClient(Node):
+    """Service client that calls add_two_ints."""
+
+    def __init__(self):
+        super().__init__('add_two_ints_client')
+
+        # Create a client
+        self.cli = self.create_client(AddTwoInts, 'add_two_ints')
+
+        # Wait for service to be available
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('Service not available, waiting...')
+
+        self.get_logger().info('Service available!')
+
+    def send_request(self, a, b):
+        """
+        Send a request to the service.
+
+        Args:
+            a: First integer
+            b: Second integer
+
+        Returns:
+            Future object (call result() to get response)
+        """
+        # Create request
+        request = AddTwoInts.Request()
+        request.a = a
+        request.b = b
+
+        # Send request asynchronously
+        self.future = self.cli.call_async(request)
+        return self.future
+
+
+def main(args=None):
+    rclpy.init(args=args)
+
+    # Get numbers from command line
+    if len(sys.argv) != 3:
+        print('Usage: add_service_client.py <a> <b>')
+        return
+
+    a = int(sys.argv[1])
+    b = int(sys.argv[2])
+
+    # Create client and send request
+    node = AddTwoIntsClient()
+    future = node.send_request(a, b)
+
+    # Wait for response
+    rclpy.spin_until_future_complete(node, future)
+
+    # Get result
+    try:
+        response = future.result()
+        node.get_logger().info(f'Result: {a} + {b} = {response.sum}')
+    except Exception as e:
+        node.get_logger().error(f'Service call failed: {e}')
+
+    node.destroy_node()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
+`}
+</CodePlayground>
+
+### Running Service and Client
+
+**Terminal 1** (Server):
+```bash
+python3 add_service_server.py
+```
+
+**Terminal 2** (Client):
+```bash
+python3 add_service_client.py 5 7
+# Output: Result: 5 + 7 = 12
+```
+
+<Callout type="tip" title="Service Best Practices">
+- Always check if service is available before calling (`wait_for_service`)
+- Use timeouts to avoid blocking forever
+- Handle exceptions (service might fail or timeout)
+- Keep service callbacks fast (don't block for long operations)
+</Callout>
+
+---
+
+## Actions: Goal-Based Communication
+
+**Actions** are for long-running tasks that provide feedback and can be canceled. They're built on top of topics and services.
+
+### When to Use Actions
+
+Use actions when:
+- The task takes significant time (seconds to minutes)
+- You want progress updates during execution
+- The client might need to cancel the task
+- You need to know when the task completes
+
+**Examples:**
+- Navigate to a goal position
+- Execute a trajectory
+- Grasp an object
+- Perform a multi-step manipulation task
+
+### Action Anatomy
+
+An action has three parts:
+1. **Goal**: What you want to achieve
+2. **Feedback**: Periodic progress updates
+3. **Result**: Final outcome when complete
+
+### Action States
+
+Actions go through states:
+- **Accepted**: Server accepted the goal
+- **Executing**: Server is working on the goal
+- **Canceling**: Client requested cancellation
+- **Succeeded**: Goal completed successfully
+- **Aborted**: Goal failed
+- **Canceled**: Goal was canceled
+
+<Callout type="insight" title="Actions vs Services">
+**Service**: "Compute a path" (quick, returns result)
+**Action**: "Navigate to goal" (slow, provides progress, can be canceled)
+
+If it takes more than a few seconds, use an action.
+</Callout>
+
+---
+
+## Quality of Service (QoS) Deep Dive
+
+**Quality of Service** policies control how messages are delivered. Choosing the right QoS is crucial for reliable robot systems.
+
+### QoS Policies Explained
+
+#### 1. Reliability
+
+**BEST_EFFORT**: Send messages but don't retry if lost
+- **Use for**: High-frequency sensor data (camera, lidar)
+- **Benefit**: Lower latency, less network overhead
+- **Trade-off**: Some messages may be lost
+
+**RELIABLE**: Retry until message is delivered
+- **Use for**: Commands, state updates, critical data
+- **Benefit**: Guaranteed delivery
+- **Trade-off**: Higher latency, more network overhead
+
+#### 2. Durability
+
+**VOLATILE**: Don't keep messages for late joiners
+- **Use for**: Real-time data that becomes stale
+- **Benefit**: Lower memory usage
+- **Trade-off**: Late subscribers miss past messages
+
+**TRANSIENT_LOCAL**: Keep last message for late joiners
+- **Use for**: State information (robot pose, battery level)
+- **Benefit**: New subscribers get current state immediately
+- **Trade-off**: Slightly more memory
+
+#### 3. History
+
+**KEEP_LAST(N)**: Keep only the last N messages
+- **Use for**: Most scenarios
+- **Benefit**: Bounded memory usage
+- **Trade-off**: Old messages are discarded
+
+**KEEP_ALL**: Keep all messages until delivered
+- **Use for**: Logging, recording
+- **Benefit**: No data loss
+- **Trade-off**: Unbounded memory growth
+
+### QoS Configuration Examples
+
+<CodePlayground language="python" title="qos_examples.py">
+{`from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy, HistoryPolicy
+
+# Sensor Data: High-frequency, lossy OK
+SENSOR_QOS = QoSProfile(
+    reliability=ReliabilityPolicy.BEST_EFFORT,
+    durability=DurabilityPolicy.VOLATILE,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=1
+)
+
+# Commands: Must be reliable
+COMMAND_QOS = QoSProfile(
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.VOLATILE,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=10
+)
+
+# State: Late joiners need current value
+STATE_QOS = QoSProfile(
+    reliability=ReliabilityPolicy.RELIABLE,
+    durability=DurabilityPolicy.TRANSIENT_LOCAL,
+    history=HistoryPolicy.KEEP_LAST,
+    depth=1
+)
+
+# Usage in publisher
+self.publisher = self.create_publisher(
+    LaserScan,
+    'scan',
+    SENSOR_QOS  # Use appropriate QoS
+)
+`}
+</CodePlayground>
+
+### QoS Compatibility
+
+Publishers and subscribers must have **compatible** QoS settings:
+
+| Publisher | Subscriber | Compatible? |
+|-----------|------------|-------------|
+| RELIABLE | RELIABLE | ✅ Yes |
+| RELIABLE | BEST_EFFORT | ✅ Yes |
+| BEST_EFFORT | RELIABLE | ❌ No |
+| BEST_EFFORT | BEST_EFFORT | ✅ Yes |
+
+<Callout type="warning" title="QoS Mismatch">
+If QoS policies are incompatible, nodes won't communicate! Use `ros2 topic info -v /topic_name` to check QoS settings and diagnose mismatches.
+</Callout>
+
+---
+
+## Node Lifecycle Management
+
+**Lifecycle nodes** (managed nodes) provide explicit control over node states, enabling graceful startup, shutdown, and error recovery.
+
+### Lifecycle States
+
+1. **Unconfigured**: Initial state, no resources allocated
+2. **Inactive**: Configured but not operating
+3. **Active**: Fully operational
+4. **Finalized**: Shutdown complete
+
+### State Transitions
+
+- `configure`: Unconfigured → Inactive (allocate resources)
+- `activate`: Inactive → Active (start operation)
+- `deactivate`: Active → Inactive (pause operation)
+- `cleanup`: Inactive → Unconfigured (release resources)
+- `shutdown`: Any state → Finalized (final cleanup)
+
+### When to Use Lifecycle Nodes
+
+Use lifecycle management when:
+- You need controlled startup sequences
+- Resources must be initialized before use
+- You want graceful degradation on errors
+- Multiple nodes must coordinate startup
+
+**Examples:**
+- Camera driver (configure camera before streaming)
+- Robot controller (initialize hardware before accepting commands)
+- Sensor fusion (wait for all sensors before publishing)
+
+### Lifecycle Node Example
+
+<CodePlayground language="python" title="lifecycle_node.py">
+{`import rclpy
+from rclpy.lifecycle import Node, State, TransitionCallbackReturn
+from std_msgs.msg import String
+
+
+class LifecycleNode(Node):
+    """Lifecycle node with state management."""
+
+    def __init__(self, node_name):
+        super().__init__(node_name)
+        self.publisher = self.create_lifecycle_publisher(String, 'chatter', 10)
+        self.timer = None
+
+    def on_configure(self, state: State):
+        """Set up resources."""
+        self.get_logger().info('Configuring...')
+        self.timer = self.create_timer(1.0, self.timer_callback)
+        self.timer.cancel()  # Don't run yet
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_activate(self, state: State):
+        """Start operation."""
+        self.get_logger().info('Activating...')
+        self.publisher.on_activate(state)
+        self.timer.reset()
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_deactivate(self, state: State):
+        """Pause operation."""
+        self.get_logger().info('Deactivating...')
+        self.publisher.on_deactivate(state)
+        self.timer.cancel()
+        return TransitionCallbackReturn.SUCCESS
+
+    def on_cleanup(self, state: State):
+        """Release resources."""
+        self.get_logger().info('Cleaning up...')
+        self.destroy_timer(self.timer)
+        return TransitionCallbackReturn.SUCCESS
+
+    def timer_callback(self):
+        """Publish when active."""
+        if self.publisher.is_activated:
+            msg = String()
+            msg.data = 'Hello from lifecycle node'
+            self.publisher.publish(msg)
+`}
+</CodePlayground>
+
+**Controlling lifecycle nodes**:
+```bash
+# Get current state
+ros2 lifecycle get /lifecycle_node
+
+# Transition through states
+ros2 lifecycle set /lifecycle_node configure
+ros2 lifecycle set /lifecycle_node activate
+ros2 lifecycle set /lifecycle_node deactivate
+```
+
+---
+
+## Practical Design Patterns
+
+### Choosing the Right Pattern
+
+| Scenario | Pattern | Rationale |
+|----------|---------|-----------|
+| Continuous sensor data | **Topic** | Asynchronous, many subscribers |
+| Occasional query | **Service** | Synchronous, needs response |
+| Long task with progress | **Action** | Feedback, cancellation |
+| Configuration value | **Parameter** | Runtime tuning |
+| System state | **Topic + TRANSIENT_LOCAL QoS** | Late joiners get current state |
+
+### Sensor Data Pipeline
+
+```
+Camera Driver (Topic, BEST_EFFORT)
+    ↓
+Image Processor (Topic, BEST_EFFORT)
+    ↓
+Object Detector (Topic, RELIABLE)
+    ↓
+Robot Controller (Action for navigation)
+```
+
+### Command and Control
+
+```
+User Interface
+    ↓ (Service: "Plan path")
+Path Planner
+    ↓ (Action: "Execute trajectory")
+Motion Controller
+    ↓ (Topic, RELIABLE: velocity commands)
+Motor Drivers
+```
+
+<Callout type="tip" title="Design Principle">
+**Start simple**: Use topics for most communication. Add services and actions only when you need their specific features. Overusing services/actions adds complexity without benefit.
+</Callout>
+
+---
+
+## Troubleshooting Guide
+
+### Common Issues
+
+**Problem**: Subscriber not receiving messages
+- Check topic names match exactly (case-sensitive)
+- Verify QoS compatibility (`ros2 topic info -v /topic`)
+- Ensure both nodes are running (`ros2 node list`)
+
+**Problem**: Service call times out
+- Check service is running (`ros2 service list`)
+- Verify service name matches
+- Check network connectivity
+
+**Problem**: QoS mismatch
+- Use `ros2 topic info -v /topic` to see QoS settings
+- Adjust publisher or subscriber QoS to be compatible
+- Remember: BEST_EFFORT publisher can't send to RELIABLE subscriber
+
+### Debugging Tools
+
+```bash
+# List all nodes
+ros2 node list
+
+# List all topics
+ros2 topic list
+
+# Get topic info including QoS
+ros2 topic info -v /topic_name
+
+# Echo messages on a topic
+ros2 topic echo /topic_name
+
+# Call a service
+ros2 service call /service_name service_type "{request_data}"
+
+# Monitor action
+ros2 action list
+ros2 action info /action_name
+```
+
+---
+
+## Assessment
+
+<Quiz
+  title="Chapter 4 Quiz"
+  questions={[
+    {
+      id: 'q1',
+      question: 'When should you use a service instead of a topic?',
+      options: [
+        'For continuous sensor data streams',
+        'For occasional operations that need a response',
+        'For long-running tasks with progress updates',
+        'For real-time control loops'
+      ],
+      correctAnswer: 1,
+      explanation: 'Services are best for occasional operations that need a response, like computing a path or querying state. Topics are better for continuous data, and actions are better for long-running tasks.'
+    },
+    {
+      id: 'q2',
+      question: 'What are the three parts of an action?',
+      options: [
+        'Request, response, feedback',
+        'Goal, feedback, result',
+        'Start, progress, end',
+        'Input, output, status'
+      ],
+      correctAnswer: 1,
+      explanation: 'Actions have three parts: Goal (what to achieve), Feedback (progress updates), and Result (final outcome).'
+    },
+    {
+      id: 'q3',
+      question: 'What does BEST_EFFORT reliability mean?',
+      options: [
+        'Messages are retried until delivered',
+        'Messages are sent but not retried if lost',
+        'Messages are guaranteed to arrive in order',
+        'Messages are compressed for efficiency'
+      ],
+      correctAnswer: 1,
+      explanation: 'BEST_EFFORT means messages are sent but not retried if lost. This is appropriate for high-frequency sensor data where losing occasional messages is acceptable.'
+    },
+    {
+      id: 'q4',
+      question: 'What are the main lifecycle states?',
+      options: [
+        'Start, Run, Stop',
+        'Init, Active, Shutdown',
+        'Unconfigured, Inactive, Active, Finalized',
+        'Created, Running, Paused, Destroyed'
+      ],
+      correctAnswer: 2,
+      explanation: 'Lifecycle nodes have four main states: Unconfigured (initial), Inactive (configured but not operating), Active (fully operational), and Finalized (shutdown).'
+    },
+    {
+      id: 'q5',
+      question: 'How do you debug a QoS mismatch?',
+      options: [
+        'Use ros2 node list',
+        'Use ros2 topic info -v /topic_name',
+        'Use ros2 service call',
+        'Use ros2 param list'
+      ],
+      correctAnswer: 1,
+      explanation: 'Use "ros2 topic info -v /topic_name" to see detailed QoS settings for publishers and subscribers, which helps identify compatibility issues.'
+    },
+    {
+      id: 'q6',
+      question: 'Which QoS durability should you use for robot state that late joiners need?',
+      options: [
+        'VOLATILE',
+        'TRANSIENT_LOCAL',
+        'PERSISTENT',
+        'BEST_EFFORT'
+      ],
+      correctAnswer: 1,
+      explanation: 'TRANSIENT_LOCAL durability keeps the last message for late joiners, so new subscribers immediately get the current state without waiting for the next update.'
+    }
+  ]}
+/>
+
+---
+
+## Learning Checkpoint
+
+<Checkpoint
+  title="Chapter 4 Mastery Checklist"
+  items={[
+    { id: 'services', text: 'I can implement services for request-response communication' },
+    { id: 'actions', text: 'I understand actions and when to use them' },
+    { id: 'qos-understand', text: 'I understand QoS policies (reliability, durability, history)' },
+    { id: 'qos-configure', text: 'I can configure QoS appropriately for different scenarios' },
+    { id: 'lifecycle', text: 'I understand lifecycle management and its benefits' },
+    { id: 'design', text: 'I can choose appropriate communication patterns for robot systems' }
+  ]}
+  storageKey="chapter-04-checkpoint"
+/>
+
+---
+
+## Summary
+
+**Key Takeaways:**
+
+- **Services** provide synchronous request-response for occasional operations
+- **Actions** handle long-running tasks with feedback and cancellation
+- **QoS policies** control message delivery (reliability, durability, history)
+- **Lifecycle management** enables controlled startup, shutdown, and error recovery
+- **Pattern selection** depends on data frequency, timing requirements, and need for responses
+
+**Design Guidelines:**
+- Use topics for continuous data streams
+- Use services for occasional queries
+- Use actions for long-running tasks
+- Configure QoS based on data characteristics
+- Use lifecycle nodes for complex initialization
+
+---
+
+## What's Next?
+
+In **Chapter 5: Introduction to Simulation**, we'll shift from ROS 2 communication to simulation platforms. You'll learn:
+- Why simulation is essential for robotics
+- Comparing Gazebo, Isaac Sim, and Unity
+- Setting up simulation environments
+- Integrating ROS 2 with simulators
+
+This bridges the gap between software development and testing robot behaviors in virtual environments.
+
+---
+
+## References
+
+Open Robotics. (2023). *ROS 2 Documentation: Services*. Retrieved from https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Services/Understanding-ROS2-Services.html
+
+Open Robotics. (2023). *ROS 2 Documentation: Actions*. Retrieved from https://docs.ros.org/en/humble/Tutorials/Beginner-CLI-Tools/Understanding-ROS2-Actions/Understanding-ROS2-Actions.html
+
+Open Robotics. (2023). *ROS 2 Documentation: Quality of Service*. Retrieved from https://docs.ros.org/en/humble/Concepts/About-Quality-of-Service-Settings.html
+
+Object Management Group. (2015). *Data Distribution Service (DDS) Specification*. Retrieved from https://www.omg.org/spec/DDS/

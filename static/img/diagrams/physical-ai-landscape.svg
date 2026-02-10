@@ -1,0 +1,43 @@
+<!-- Physical AI Landscape Diagram
+
+     This diagram should illustrate the Physical AI ecosystem showing:
+
+     1. Core Components (center):
+        - Perception (sensors: cameras, lidar, IMU, tactile)
+        - Cognition (AI models: planning, learning, reasoning)
+        - Action (actuators: motors, grippers, wheels)
+
+     2. Surrounding Elements:
+        - Simulation environments (Gazebo, Isaac Sim, Unity)
+        - Training data sources (demonstrations, teleoperation, synthetic data)
+        - Real-world deployment contexts (manufacturing, autonomous vehicles, service robots)
+
+     3. Connections showing:
+        - Sim-to-real transfer pipeline
+        - Sensor-motor feedback loops
+        - Learning and adaptation cycles
+
+     4. Visual Style:
+        - Clean, modern design with clear hierarchy
+        - Use color coding: blue for perception, green for cognition, orange for action
+        - Include icons for different sensor/actuator types
+        - Show bidirectional arrows for feedback loops
+
+     Recommended tools: Figma, Adobe Illustrator, or draw.io
+     Dimensions: 1200x800px, SVG format for scalability
+     Accessibility: Include descriptive title and desc elements in SVG
+-->
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="physical-ai-landscape-title physical-ai-landscape-desc">
+  <title id="physical-ai-landscape-title">Physical AI Landscape</title>
+  <desc id="physical-ai-landscape-desc">Diagram showing the Physical AI ecosystem with perception, cognition, and action components, connected to simulation environments and real-world deployment contexts through sensor-motor feedback loops.</desc>
+
+  <!-- Placeholder content - to be replaced with actual diagram -->
+  <rect width="1200" height="800" fill="#f8f9fa"/>
+  <text x="600" y="400" text-anchor="middle" font-size="24" fill="#333">
+    Physical AI Landscape Diagram
+  </text>
+  <text x="600" y="440" text-anchor="middle" font-size="16" fill="#666">
+    [Diagram to be created showing ecosystem components]
+  </text>
+</svg>

@@ -1,0 +1,35 @@
+{
+  "version": 2,
+  "name": "physical-ai-textbook",
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/assets/(.*)",
+      "dest": "/assets/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "framework": "docusaurus",
+  "installCommand": "npm install",
+  "devCommand": "npm start",
+  "env": {
+    "NODE_VERSION": "18"
+  },
+  "regions": ["iad1"],
+  "github": {
+    "silent": true
+  }
+}

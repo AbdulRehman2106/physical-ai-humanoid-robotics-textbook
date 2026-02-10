@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="120" fill="#0f172a" />
+  <circle cx="256" cy="256" r="150" fill="none" stroke="#0ea5e9" stroke-width="30" />
+  <!-- Minimal Face icon for tab -->
+  <circle cx="200" cy="230" r="25" fill="white" />
+  <circle cx="312" cy="230" r="25" fill="white" />
+  <rect x="231" y="290" width="50" height="8" rx="4" fill="white" />
+</svg>

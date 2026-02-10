@@ -1,0 +1,9 @@
+/* Navbar custom styles */
+.navbar {
+  position: relative;
+}
+
+.navbar__inner {
+  position: relative;
+}
+
