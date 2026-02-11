@@ -16,6 +16,11 @@ const config: Config = {
   onBrokenLinks: 'warn',
   onBrokenMarkdownLinks: 'warn',
 
+  // Custom fields for environment variables
+  customFields: {
+    backendUrl: process.env.BACKEND_URL || 'http://localhost:3001/api',
+  },
+
   i18n: {
     defaultLocale: 'en',
     locales: ['en'],
