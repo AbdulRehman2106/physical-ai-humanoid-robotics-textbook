@@ -1,7 +1,10 @@
 import dotenv from 'dotenv';
 
-// Load environment variables
-dotenv.config();
+// Load environment variables (only in local development)
+// Vercel injects environment variables directly into process.env
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 interface Config {
   cohere: {
@@ -42,6 +45,15 @@ function getEnvNumber(key: string, defaultValue: number): number {
     throw new Error(`Environment variable ${key} must be a valid number`);
   }
   return parsed;
+}
+
+// Log environment for debugging (only in production to diagnose Vercel issues)
+if (process.env.NODE_ENV === 'production') {
+  console.log('Environment check:', {
+    hasApiKey: !!process.env.COHERE_API_KEY,
+    nodeEnv: process.env.NODE_ENV,
+    apiKeyPrefix: process.env.COHERE_API_KEY?.substring(0, 10) + '...'
+  });
 }
 
 export const config: Config = {
