@@ -18,7 +18,7 @@ const config: Config = {
 
   // Custom fields for environment variables
   customFields: {
-    backendUrl: process.env.BACKEND_URL || 'http://localhost:3001/api',
+    backendUrl: (process.env.BACKEND_URL || 'http://localhost:3001/api') as string,
   },
 
   i18n: {
