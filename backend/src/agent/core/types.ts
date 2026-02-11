@@ -41,7 +41,7 @@ export interface AgentResponse {
     latency: number;
     toolCalls?: ToolCall[];
     truncated?: boolean;
-    finishReason?: 'complete' | 'length' | 'stop' | 'error';
+    finishReason?: 'complete' | 'length' | 'stop' | 'tool_calls' | 'error';
   };
 }
 

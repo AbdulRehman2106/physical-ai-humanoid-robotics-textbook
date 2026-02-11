@@ -18,7 +18,7 @@ export function initHealthCheck(provider: CohereAdapter): void {
  * GET /api/health
  * Health check endpoint
  */
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', async (_req: Request, res: Response) => {
   const startTime = Date.now();
 
   try {

@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid';
 import { IRunner } from './Runner';
 import { IAgent } from './Agent';
 import { IMemoryManager } from '../memory/MemoryManager';

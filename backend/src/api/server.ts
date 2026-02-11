@@ -25,6 +25,7 @@ export function createApp(): Express {
   app.use(cors({
     origin: config.server.nodeEnv === 'production'
       ? process.env.ALLOWED_ORIGINS?.split(',') || [
+          'https://physical-ai-frontend-kappa.vercel.app',
           'https://physical-ai-humanoid-robotics-textb-nine-neon.vercel.app',
           'https://physical-ai-humanoid-robotics-textbook-igiy4hlmc.vercel.app'
         ]
@@ -41,7 +42,7 @@ export function createApp(): Express {
   app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 
   // Request logging middleware
-  app.use((req, res, next) => {
+  app.use((req, _res, next) => {
     logger.info('Incoming request', {
       method: req.method,
       path: req.path,

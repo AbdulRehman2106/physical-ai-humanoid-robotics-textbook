@@ -1,6 +1,5 @@
 import { IRunner } from '../agent/core/Runner';
 import { AgentResponse } from '../agent/core/types';
-import { Conversation } from '../models/Conversation';
 import { ValidationError, NotFoundError } from '../utils/errors';
 import { logger } from '../utils/logger';
 import { SafetyService } from './SafetyService';

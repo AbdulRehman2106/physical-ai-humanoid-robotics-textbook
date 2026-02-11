@@ -54,7 +54,7 @@ export class CohereAdapter implements IProvider {
             frequencyPenalty: options.frequencyPenalty,
             presencePenalty: options.presencePenalty,
           }),
-          10000 // 10 second timeout
+          30000 // 30 second timeout
         );
       });
 
@@ -63,7 +63,7 @@ export class CohereAdapter implements IProvider {
 
       return {
         text: response.generations[0].text,
-        finishReason: this.mapFinishReason(response.generations[0].finishReason),
+        finishReason: this.mapFinishReason((response.generations[0] as any).finishReason),
         usage: {
           promptTokens: 0, // Cohere doesn't provide this in generate
           completionTokens: 0,
@@ -99,9 +99,9 @@ export class CohereAdapter implements IProvider {
 
       // Build chat history (all messages except the last user message)
       const chatHistory = conversationMessages.slice(0, -1).map(msg => ({
-        role: msg.role === 'user' ? 'USER' : 'CHATBOT',
+        role: msg.role === 'user' ? ('USER' as const) : ('CHATBOT' as const),
         message: msg.content,
-      }));
+      })) as any;
 
       const response = await this.withRetry(async () => {
         return await this.withTimeout(
@@ -117,7 +117,7 @@ export class CohereAdapter implements IProvider {
             frequencyPenalty: options.frequencyPenalty,
             presencePenalty: options.presencePenalty,
           }),
-          10000 // 10 second timeout
+          30000 // 30 second timeout
         );
       });
 

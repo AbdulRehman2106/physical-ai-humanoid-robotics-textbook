@@ -38,19 +38,19 @@ export const MessageList: React.FC<MessageListProps> = ({ messages, isLoading })
             {message.role === 'assistant' ? (
               <ReactMarkdown
                 components={{
-                  code({ node, inline, className, children, ...props }) {
+                  code({ className, children }) {
                     const match = /language-(\w+)/.exec(className || '');
-                    return !inline && match ? (
+                    const isInline = !className;
+                    return !isInline && match ? (
                       <SyntaxHighlighter
-                        style={vscDarkPlus}
+                        style={vscDarkPlus as any}
                         language={match[1]}
                         PreTag="div"
-                        {...props}
                       >
                         {String(children).replace(/\n$/, '')}
                       </SyntaxHighlighter>
                     ) : (
-                      <code className={className} {...props}>
+                      <code className={className}>
                         {children}
                       </code>
                     );

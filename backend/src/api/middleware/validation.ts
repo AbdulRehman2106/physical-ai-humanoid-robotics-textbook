@@ -6,7 +6,7 @@ import { ValidationError } from '../../utils/errors';
  * Validate request body against Zod schema
  */
 export function validateBody(schema: ZodSchema) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     try {
       req.body = schema.parse(req.body);
       next();
@@ -28,7 +28,7 @@ export function validateBody(schema: ZodSchema) {
  * Validate request params against Zod schema
  */
 export function validateParams(schema: ZodSchema) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     try {
       req.params = schema.parse(req.params);
       next();
@@ -50,7 +50,7 @@ export function validateParams(schema: ZodSchema) {
  * Validate request query against Zod schema
  */
 export function validateQuery(schema: ZodSchema) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     try {
       req.query = schema.parse(req.query);
       next();

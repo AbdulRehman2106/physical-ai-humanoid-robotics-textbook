@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { IMemoryManager } from './MemoryManager';
 import { ChatMessage, IContext } from '../core/types';
-import { Conversation, Context, createConversation, createContext } from '../../models/Conversation';
+import { Conversation, createConversation } from '../../models/Conversation';
 import { logger } from '../../utils/logger';
 import { config } from '../../utils/config';
 
@@ -241,13 +241,12 @@ export class ConversationMemory implements IMemoryManager {
    * Extract topics from messages
    */
   private extractTopics(messages: any[]): string[] {
-    const topics = new Set<string>();
     const topicKeywords = new Map<string, number>(); // word -> frequency
 
     messages.forEach(msg => {
       // Simple keyword extraction (in production, use NLP)
       const words = msg.content.toLowerCase().split(/\s+/);
-      words.forEach(word => {
+      words.forEach((word: string) => {
         // Keep words longer than 5 characters as potential topics
         if (word.length > 5 && !this.isCommonWord(word)) {
           const count = topicKeywords.get(word) || 0;

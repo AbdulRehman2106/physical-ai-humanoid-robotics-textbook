@@ -52,4 +52,26 @@ export interface IMemoryManager {
    * @param keepCount - Number of recent messages to keep
    */
   pruneMessages(conversationId: string, keepCount: number): void;
+
+  /**
+   * Create new conversation
+   *
+   * @returns Conversation identifier
+   */
+  createConversation(): string;
+
+  /**
+   * End conversation
+   *
+   * @param conversationId - Conversation identifier
+   */
+  endConversation(conversationId: string): void;
+
+  /**
+   * Get conversation by ID
+   *
+   * @param conversationId - Conversation identifier
+   * @returns Conversation object or undefined
+   */
+  getConversation(conversationId: string): any;
 }

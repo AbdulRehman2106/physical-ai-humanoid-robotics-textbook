@@ -19,7 +19,7 @@ export function initChatRoutes(service: ChatService): void {
  * POST /api/chat/conversations
  * Create new conversation
  */
-router.post('/', async (req: Request, res: Response, next: NextFunction) => {
+router.post('/', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const conversation = await chatService.createConversation();
 
