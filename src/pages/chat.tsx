@@ -14,7 +14,10 @@ interface ChatMessage {
   timestamp: string;
 }
 
-const API_BASE_URL = 'http://localhost:3001/api';
+// Use environment variable in production, fallback to localhost in development
+const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
+  ? 'https://your-backend-url.vercel.app/api'  // Replace with actual backend URL after deployment
+  : 'http://localhost:3001/api';
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);

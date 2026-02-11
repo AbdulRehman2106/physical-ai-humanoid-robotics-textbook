@@ -26,7 +26,8 @@
   "installCommand": "npm install",
   "devCommand": "npm start",
   "env": {
-    "NODE_VERSION": "18"
+    "NODE_VERSION": "18",
+    "DOCUSAURUS_BACKEND_URL": "@backend_url"
   },
   "regions": ["iad1"],
   "github": {
