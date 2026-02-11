@@ -152,10 +152,10 @@ export class CohereAdapter implements IProvider {
    */
   async healthCheck(): Promise<boolean> {
     try {
-      // Simple health check: try to generate a short completion
+      // Use chat API instead of deprecated generate API
       await this.withTimeout(
-        this.client.generate({
-          prompt: 'test',
+        this.client.chat({
+          message: 'test',
           model: this.model,
           maxTokens: 1,
         }),

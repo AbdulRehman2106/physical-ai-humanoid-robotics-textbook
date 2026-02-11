@@ -30,7 +30,7 @@ git push origin main
 3. GitHub se authorize karein
 4. Email verify karein
 
-### 2.2 GitHub Repository Connect Karna
+### 2.2 GitHub Repository Connect Karna 
 1. Vercel Dashboard par jaayein
 2. **"Add New..."** → **"Project"** select karein
 3. **"Import Git Repository"** section mein apni repository search karein:
