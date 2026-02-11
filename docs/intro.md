@@ -34,4 +34,4 @@ This textbook is organized into 12 chapters designed for a 12-week learning jour
 
 ## Getting Started
 
-Begin with [Chapter 1: Introduction to Physical AI](./chapters/01-physical-ai-intro/) to start your journey into embodied intelligence and robotics systems.
+Begin with [Chapter 1: Introduction to Physical AI](./chapters/physical-ai-intro) to start your journey into embodied intelligence and robotics systems.
