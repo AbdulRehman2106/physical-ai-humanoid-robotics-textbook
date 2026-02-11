@@ -16,7 +16,7 @@ interface ChatMessage {
 
 // Use environment variable in production, fallback to localhost in development
 const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-  ? 'https://your-backend-url.vercel.app/api'  // Replace with actual backend URL after deployment
+  ? 'https://physical-ai-backend-green.vercel.app/api'
   : 'http://localhost:3001/api';
 
 export default function ChatPage() {
