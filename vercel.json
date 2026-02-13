@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "name": "physical-ai-textbook",
   "builds": [
     {
       "src": "package.json",
@@ -25,11 +24,6 @@
   "framework": "docusaurus",
   "installCommand": "npm install",
   "devCommand": "npm start",
-  "env": {
-    "NODE_VERSION": "18",
-    "NEXT_PUBLIC_API_URL": "@next_public_api_url"
-  },
-  "regions": ["iad1"],
   "github": {
     "silent": true
   }
