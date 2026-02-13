@@ -16,7 +16,12 @@ app = FastAPI(
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_url, "http://localhost:3000", "https://*.vercel.app"],
+    allow_origins=[
+        settings.frontend_url,
+        "http://localhost:3000",
+        "https://*.vercel.app",
+        "https://abdul18-rag-chatbot.hf.space",  # Hugging Face Spaces
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
