@@ -20,6 +20,7 @@ app.add_middleware(
         settings.frontend_url,
         "http://localhost:3000",
         "https://*.vercel.app",
+        "https://physical-ai-textbook-wine.vercel.app",  # Production Vercel URL
         "https://abdul18-rag-chatbot.hf.space",  # Hugging Face Spaces
     ],
     allow_credentials=True,
