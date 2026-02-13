@@ -6,6 +6,7 @@ import Layout from '@theme/Layout';
 import styles from './index.module.css';
 import { useCountUp } from '../hooks/useCountUp';
 import { FeatureCard, ScrollIndicator, SearchBar } from '../components';
+import ChatBot from '../components/ChatBot';
 
 function HomepageHeader() {
   const {siteConfig} = useDocusaurusContext();
@@ -281,77 +282,6 @@ function Newsletter() {
   );
 }
 
-function ChatbotPreview() {
-  return (
-    <section className={styles.chatbotPreview}>
-      <div className="container">
-        <div className="row">
-          <div className="col col--6">
-            <h2>🤖 AI Chat Assistant</h2>
-            <p style={{ fontSize: '1.1rem', lineHeight: '1.7', marginBottom: '1.5rem' }}>
-              Get instant answers to your questions about Physical AI, ROS 2, robotics, and more.
-              Our AI assistant is trained on the entire textbook content and ready to help you learn.
-            </p>
-            <ul style={{ fontSize: '1rem', lineHeight: '1.8', marginBottom: '2rem' }}>
-              <li>✅ Ask questions about any chapter</li>
-              <li>✅ Get code examples and explanations</li>
-              <li>✅ Clarify complex concepts</li>
-              <li>✅ Available 24/7 on every page</li>
-            </ul>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              <Link
-                className="button button--primary button--lg"
-                to="/chat">
-                Try Full Chat Experience →
-              </Link>
-              <button
-                className="button button--outline button--primary button--lg"
-                onClick={() => {
-                  const chatButton = document.querySelector('[aria-label="Open AI Assistant"]') as HTMLButtonElement;
-                  if (chatButton) chatButton.click();
-                }}
-              >
-                Open Quick Chat 💬
-              </button>
-            </div>
-          </div>
-          <div className="col col--6">
-            <div className={styles.chatbotDemo}>
-              <div className={styles.demoWindow}>
-                <div className={styles.demoHeader}>
-                  <span>🤖 AI Assistant</span>
-                </div>
-                <div className={styles.demoMessages}>
-                  <div className={styles.demoMessage}>
-                    <strong>You:</strong> What is Physical AI?
-                  </div>
-                  <div className={`${styles.demoMessage} ${styles.demoAssistant}`}>
-                    <strong>Assistant:</strong> Physical AI refers to artificial intelligence systems
-                    that interact with and learn from the physical world through embodied agents like
-                    robots. It combines perception, reasoning, and action to enable machines to
-                    understand and manipulate their environment.
-                  </div>
-                  <div className={styles.demoMessage}>
-                    <strong>You:</strong> How does ROS 2 help?
-                  </div>
-                  <div className={`${styles.demoMessage} ${styles.demoAssistant}`}>
-                    <strong>Assistant:</strong> ROS 2 provides a robust framework for building
-                    robot applications with features like real-time communication, distributed
-                    computing, and a rich ecosystem of tools and libraries...
-                  </div>
-                </div>
-                <div className={styles.demoInput}>
-                  <input type="text" placeholder="Ask anything..." disabled />
-                  <button disabled>➤</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
 
 function CallToAction() {
   return (
@@ -457,11 +387,11 @@ export default function Home() {
         <HomepageFeatures />
         <Stats />
         <ChapterOverview />
-        <ChatbotPreview />
         <Testimonials />
         <Newsletter />
         <CallToAction />
       </main>
+      <ChatBot />
     </Layout>
   );
 }

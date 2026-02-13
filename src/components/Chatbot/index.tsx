@@ -1,110 +1,103 @@
-/**
- * AI Chatbot Component - Integrated with Backend API
- *
- * Interactive chatbot UI for the Physical AI textbook
- * Connected to Express + Cohere backend
- */
+import React, { useState, useEffect, useRef } from 'react';
+import { chatAPI, ChatResponse, SourceReference } from '../../services/chatApi';
+import { captureTextSelection, hasTextSelection, SelectionContext } from '../../utils/textSelection';
+import styles from './styles.module.css';
 
-import React, { useState, useRef, useEffect } from 'react';
-import styles from './Chatbot.module.css';
-
-interface ChatMessage {
+interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  timestamp: string;
+  sources?: SourceReference[];
 }
 
-// Use environment variable in production, fallback to localhost in development
-const API_BASE_URL = typeof window !== 'undefined' && window.location.hostname !== 'localhost'
-  ? 'https://physical-ai-backend-green.vercel.app/api'
-  : 'http://localhost:3001/api';
-
-export default function Chatbot() {
+export default function ChatBot(): JSX.Element {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [selectionContext, setSelectionContext] = useState<SelectionContext | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  // Focus input when chat opens
+  // Check for text selection when opening chat
   useEffect(() => {
-    if (isOpen && !conversationId) {
-      initializeConversation();
+    if (isOpen && hasTextSelection()) {
+      const context = captureTextSelection();
+      if (context) {
+        setSelectionContext(context);
+      }
     }
+  }, [isOpen]);
+
+  // Focus input when opening
+  useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
     }
   }, [isOpen]);
 
-  const initializeConversation = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/chat/conversations`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      if (!response.ok) throw new Error('Failed to create conversation');
-
-      const data = await response.json();
-      setConversationId(data.id);
-    } catch (err) {
-      setError('Failed to initialize chat. Please refresh the page.');
-      console.error('Conversation init error:', err);
-    }
-  };
-
   const handleSend = async () => {
-    if (!input.trim() || isLoading || !conversationId) return;
+    if (!input.trim() || isLoading) return;
 
-    const userMessage = input.trim();
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: input.trim(),
+    };
+
+    setMessages(prev => [...prev, userMessage]);
     setInput('');
+    setIsLoading(true);
     setError(null);
 
-    // Add user message to UI
-    const tempUserMessage: ChatMessage = {
-      id: `temp-${Date.now()}`,
-      role: 'user',
-      content: userMessage,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages(prev => [...prev, tempUserMessage]);
-
-    // Get AI response
-    setIsLoading(true);
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/chat/conversations/${conversationId}/messages`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content: userMessage }),
-        }
-      );
+      let response: ChatResponse;
 
-      if (!response.ok) {
-        throw new Error('Failed to get response');
+      // Create conversation if needed
+      if (!conversationId) {
+        const conv = await chatAPI.createConversation();
+        setConversationId(conv.conversation_id);
       }
 
-      const assistantMessage = await response.json();
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (err) {
-      setError('Failed to get response. Please try again.');
-      const errorMessage: ChatMessage = {
-        id: `error-${Date.now()}`,
+      // Send query with or without selection context
+      if (selectionContext) {
+        response = await chatAPI.queryWithContext({
+          query: userMessage.content,
+          selected_text: selectionContext.text,
+          selection_metadata: {
+            chapter_title: selectionContext.chapterTitle,
+            section_title: selectionContext.sectionTitle,
+            url: selectionContext.url,
+          },
+          conversation_id: conversationId || undefined,
+        });
+        setSelectionContext(null); // Clear after use
+      } else {
+        response = await chatAPI.query({
+          query: userMessage.content,
+          conversation_id: conversationId || undefined,
+        });
+      }
+
+      const assistantMessage: Message = {
+        id: response.message_id,
         role: 'assistant',
-        content: "I'm sorry, I encountered an error. Please try again.",
-        timestamp: new Date().toISOString(),
+        content: response.answer,
+        sources: response.sources,
       };
-      setMessages(prev => [...prev, errorMessage]);
+
+      setMessages(prev => [...prev, assistantMessage]);
+      setConversationId(response.conversation_id);
+    } catch (err) {
+      console.error('Chat error:', err);
+      setError('Failed to get response. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -117,134 +110,121 @@ export default function Chatbot() {
     }
   };
 
-  const handleClear = async () => {
-    setMessages([]);
-    setError(null);
-
-    // Create new conversation
-    if (conversationId) {
-      try {
-        await fetch(`${API_BASE_URL}/chat/conversations/${conversationId}`, {
-          method: 'DELETE',
-        });
-      } catch (err) {
-        console.error('Failed to delete conversation:', err);
+  const toggleChat = () => {
+    setIsOpen(!isOpen);
+    if (!isOpen && hasTextSelection()) {
+      const context = captureTextSelection();
+      if (context) {
+        setSelectionContext(context);
       }
     }
-
-    setConversationId(null);
-    await initializeConversation();
   };
 
-  return (
-    <>
-      {/* Floating Chat Button */}
-      <button
-        className={styles.chatButton}
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Open AI Assistant"
-        title="AI Assistant - Ask me anything!"
-      >
-        {isOpen ? '✕' : '💬'}
-      </button>
+  if (!isOpen) {
+    return (
+      <div className={styles.chatbotContainer}>
+        <button
+          className={styles.chatbotFab}
+          onClick={toggleChat}
+          aria-label="Open AI Assistant"
+        >
+          💬
+        </button>
+      </div>
+    );
+  }
 
-      {/* Chat Window */}
-      {isOpen && (
-        <div className={styles.chatWindow}>
-          {/* Header */}
-          <div className={styles.chatHeader}>
-            <div className={styles.headerContent}>
-              <span className={styles.headerIcon}>🤖</span>
-              <div>
-                <h3>AI Assistant</h3>
-                <p>Powered by Cohere</p>
+  return (
+    <div className={styles.chatbotContainer}>
+      <div className={styles.chatbotPanel}>
+        <div className={styles.chatbotHeader}>
+          <h3>AI Teaching Assistant</h3>
+          <button
+            className={styles.chatbotClose}
+            onClick={toggleChat}
+            aria-label="Close chat"
+          >
+            ×
+          </button>
+        </div>
+
+        <div className={styles.chatbotMessages}>
+          {messages.length === 0 && (
+            <div className={`${styles.chatbotMessage} ${styles.assistant}`}>
+              <div className={`${styles.messageBubble} ${styles.assistant}`}>
+                Hi! I'm your AI teaching assistant for the Physical AI textbook.
+                Ask me anything about robotics, ROS 2, simulations, or any chapter content!
               </div>
             </div>
-            <button
-              className={styles.clearButton}
-              onClick={handleClear}
-              title="Clear conversation"
+          )}
+
+          {messages.map(message => (
+            <div
+              key={message.id}
+              className={`${styles.chatbotMessage} ${styles[message.role]}`}
             >
-              🗑️
-            </button>
-          </div>
-
-          {/* Messages */}
-          <div className={styles.chatMessages}>
-            {messages.length === 0 && (
-              <div className={styles.welcomeMessage}>
-                <p>👋 Hi! I'm your AI assistant for this textbook.</p>
-                <p>Ask me anything about:</p>
-                <ul>
-                  <li>Physical AI & Embodied Intelligence</li>
-                  <li>ROS 2 Development</li>
-                  <li>Robot Simulation (Gazebo, Isaac Sim)</li>
-                  <li>Vision-Language-Action Models</li>
-                  <li>Sim-to-Real Transfer</li>
-                  <li>Humanoid Robotics</li>
-                </ul>
+              <div className={`${styles.messageBubble} ${styles[message.role]}`}>
+                {message.content}
               </div>
-            )}
+            </div>
+          ))}
 
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`${styles.message} ${
-                  msg.role === 'user' ? styles.userMessage : styles.assistantMessage
-                }`}
+          {isLoading && (
+            <div className={`${styles.chatbotMessage} ${styles.assistant}`}>
+              <div className={styles.loadingIndicator}>
+                <div className={styles.loadingDot}></div>
+                <div className={styles.loadingDot}></div>
+                <div className={styles.loadingDot}></div>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        <div className={styles.chatbotInputContainer}>
+          {selectionContext && (
+            <div className={styles.selectionContext}>
+              <div className={styles.selectionText}>
+                Selected: "{selectionContext.text.substring(0, 100)}..."
+              </div>
+              <button
+                className={styles.clearSelection}
+                onClick={() => setSelectionContext(null)}
+                aria-label="Clear selection"
               >
-                <div className={styles.messageContent}>{msg.content}</div>
-                <div className={styles.messageTime}>
-                  {new Date(msg.timestamp).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </div>
-              </div>
-            ))}
+                ×
+              </button>
+            </div>
+          )}
 
-            {isLoading && (
-              <div className={`${styles.message} ${styles.assistantMessage}`}>
-                <div className={styles.messageContent}>
-                  <div className={styles.typingIndicator}>
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div className={styles.errorMessage}>
-                ⚠️ {error}
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
-          </div>
-
-          {/* Input */}
-          <div className={styles.chatInput}>
-            <input
+          <div className={styles.chatbotInputWrapper}>
+            <textarea
               ref={inputRef}
-              type="text"
+              className={styles.chatbotInput}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={e => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Ask a question..."
-              disabled={isLoading || !conversationId}
+              placeholder="Ask about Physical AI..."
+              rows={1}
+              disabled={isLoading}
             />
             <button
+              className={styles.chatbotSend}
               onClick={handleSend}
-              disabled={!input.trim() || isLoading || !conversationId}
-              aria-label="Send message"
+              disabled={!input.trim() || isLoading}
             >
-              {isLoading ? '⏳' : '➤'}
+              Send
             </button>
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </div>
   );
 }

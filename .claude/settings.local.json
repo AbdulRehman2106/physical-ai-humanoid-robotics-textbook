@@ -53,7 +53,29 @@
       "Bash(git commit:*)",
       "Bash(git remote:*)",
       "Bash(git branch -M main)",
-      "Bash(git push -u origin main --force)"
+      "Bash(git push -u origin main --force)",
+      "Bash(git push:*)",
+      "WebFetch(domain:physical-ai-humanoid-robotics-textb-six-azure.vercel.app)",
+      "Bash(npm outdated)",
+      "Bash(npm run lint)",
+      "Bash(git pull:*)",
+      "Bash(npm run clear)",
+      "Bash(git log:*)",
+      "Bash(python -m py_compile app/main.py app/config.py app/services/*.py app/models/*.py app/db/*.py app/api/routes/*.py)",
+      "Bash(python -c \"import sys; print\\(f''Python version: {sys.version}''\\)\")",
+      "Bash(python -c \"\nimport sys\nsys.path.insert\\(0, ''.''\\)\nfrom app.config import get_settings\n\ntry:\n    settings = get_settings\\(\\)\n    print\\(''✅ Configuration loaded successfully!''\\)\n    print\\(f''Cohere API Key: {settings.cohere_api_key[:20]}...''\\)\n    print\\(f''Qdrant URL: {settings.qdrant_url}''\\)\n    print\\(f''Qdrant Collection: {settings.qdrant_collection_name}''\\)\n    print\\(f''Database configured: Yes''\\)\nexcept Exception as e:\n    print\\(f''❌ Error loading configuration: {e}''\\)\n\")",
+      "Bash(python:*)",
+      "Bash(psql:*)",
+      "Bash(tee:*)",
+      "Bash(pip install:*)",
+      "Bash(echo:*)",
+      "Bash(echo \"- API Root: http://localhost:8001/\")",
+      "Bash(npm cache clean:*)",
+      "Bash(if exist .docusaurus rmdir /s /q .docusaurus)",
+      "Bash(if exist node_modules.cache rmdir /s /q node_modules.cache)",
+      "Bash(npm run start)",
+      "Bash(ren docusaurus.config.ts docusaurus.config.ts.backup)",
+      "Bash(del:*)"
     ]
   }
 }

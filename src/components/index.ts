@@ -24,3 +24,4 @@ export { default as LearningProgressTracker } from './LearningProgressTracker';
 export { default as QuickFeedback } from './QuickFeedback';
 export { default as ThemeToggle } from './ThemeToggle';
 export { default as MultiThemeSelector } from './MultiThemeSelector';
+export { default as ChatBot } from './ChatBot';

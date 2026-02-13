@@ -7,15 +7,9 @@
 import React from 'react';
 import {
   ReadingProgress,
-  FloatingActionButton,
-  KeyboardShortcutsPanel,
-  FontSizeController,
-  BookmarkManager,
-  NotesPanel,
-  LearningProgressTracker,
-  QuickFeedback,
   MultiThemeSelector
 } from '../components';
+import ChatBot from '../components/ChatBot';
 
 export default function Root({children}) {
   return (
@@ -23,13 +17,7 @@ export default function Root({children}) {
       <ReadingProgress />
       <MultiThemeSelector />
       {children}
-      <FloatingActionButton />
-      <KeyboardShortcutsPanel />
-      <FontSizeController />
-      <BookmarkManager />
-      <NotesPanel />
-      <LearningProgressTracker />
-      <QuickFeedback />
+      <ChatBot />
     </>
   );
 }

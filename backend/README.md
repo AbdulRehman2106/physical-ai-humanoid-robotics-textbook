@@ -1,337 +1,174 @@
-# AI Chatbot Assistant
+# Physical AI RAG Backend
 
-A professional, context-aware AI chatbot powered by Cohere, built with TypeScript and following OpenAI Agent SDK patterns.
+FastAPI backend for the Physical AI textbook RAG chatbot.
 
 ## Features
 
-✅ **Technical Q&A** - Accurate responses to programming and technical questions
-✅ **Step-by-Step Guidance** - Structured explanations with numbered steps
-✅ **Context Maintenance** - Multi-turn conversations with context awareness
-✅ **Safety Boundaries** - Refuses medical/legal/financial advice and autonomous actions
-✅ **Professional Formatting** - Automatic detection and use of headers, lists, code blocks, tables
-✅ **Token Management** - Automatic context pruning when token limits exceeded
-✅ **Error Handling** - Graceful degradation with user-friendly error messages
-
-## Architecture
-
-```
-User Input
-    ↓
-Safety Pre-Processing (detect prohibited topics)
-    ↓
-System Prompt Injection (safety boundaries + formatting guidelines)
-    ↓
-Agent Reasoning (ChatAgent.run)
-    ↓
-Cohere Completion (CohereAdapter.chat)
-    ↓
-Format Detection (plain, structured, code, table)
-    ↓
-Safety Post-Processing (validate response)
-    ↓
-Final User Response
-```
+- **RAG Pipeline**: Retrieval-Augmented Generation using Cohere API
+- **Vector Search**: Qdrant for semantic search
+- **Conversation Storage**: Neon Postgres for chat history
+- **Text Selection Context**: Support for querying with selected text
 
 ## Tech Stack
 
-- **Runtime**: Node.js 20.x + TypeScript 5.x
-- **LLM Provider**: Cohere (Command-R)
-- **API Framework**: Express.js
-- **Validation**: Zod
-- **Testing**: Jest + Supertest
-- **Architecture**: OpenAI Agent SDK patterns (provider-agnostic)
+- FastAPI (Python 3.11+)
+- Cohere API (embeddings + generation)
+- Qdrant Cloud (vector database)
+- Neon Serverless Postgres (conversation storage)
 
-## Quick Start
+## Setup
 
-### Prerequisites
-
-- Node.js 20.x or higher
-- Cohere API key ([Get one here](https://dashboard.cohere.com/api-keys))
-
-### Installation
+### 1. Install Dependencies
 
 ```bash
-# Clone the repository
 cd backend
+pip install -r requirements.txt
+```
 
-# Install dependencies
-npm install
+### 2. Configure Environment
 
-# Configure environment
+Copy `.env.example` to `.env` and fill in your credentials:
+
+```bash
 cp .env.example .env
-# Edit .env and add your COHERE_API_KEY
 ```
 
-### Configuration
+Required environment variables:
+- `COHERE_API_KEY`: Your Cohere API key
+- `QDRANT_URL`: Qdrant cluster URL
+- `QDRANT_API_KEY`: Qdrant API key
+- `NEON_DATABASE_URL`: Neon Postgres connection string
+- `FRONTEND_URL`: Frontend URL for CORS
 
-Edit `backend/.env`:
+### 3. Setup Database
+
+Run the schema on your Neon database:
 
 ```bash
-COHERE_API_KEY=your_cohere_api_key_here
-PORT=3000
-NODE_ENV=development
-LOG_LEVEL=info
+psql $NEON_DATABASE_URL < app/db/schema.sql
 ```
 
-### Run
+### 4. Ingest Content
+
+Parse MDX files and upload to Qdrant:
 
 ```bash
-# Development mode (with hot reload)
-npm run dev
-
-# Production mode
-npm run build
-npm start
-
-# Run tests
-npm test
+python scripts/ingest_content.py
 ```
+
+This will:
+- Parse all 11 chapters from `docs/chapters/`
+- Create ~80-100 semantic chunks
+- Generate embeddings via Cohere
+- Upload to Qdrant
+
+### 5. Run Server
+
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+
+API will be available at `http://localhost:8000`
 
 ## API Endpoints
 
-### Create Conversation
+### Chat
 
-```bash
-POST /api/chat/conversations
-
-Response:
+**POST /api/chat/query**
+```json
 {
-  "id": "uuid",
-  "createdAt": "2026-02-10T12:00:00Z",
-  "status": "active",
-  "messages": []
+  "query": "What is Physical AI?",
+  "conversation_id": "uuid-optional",
+  "filters": { "chapter": 1 }
 }
 ```
 
-### Send Message
-
-```bash
-POST /api/chat/conversations/:conversationId/messages
-Content-Type: application/json
-
+**POST /api/chat/query-with-context**
+```json
 {
-  "content": "How do I implement error handling in Python?"
-}
-
-Response:
-{
-  "id": "msg_...",
-  "conversationId": "uuid",
-  "role": "assistant",
-  "content": "Here's how to implement error handling...",
-  "timestamp": "2026-02-10T12:00:05Z",
-  "metadata": {
-    "model": "command-r",
-    "tokens": 150,
-    "latency": 1200
+  "query": "Explain this",
+  "selected_text": "Physical AI systems...",
+  "selection_metadata": {
+    "chapter_title": "Introduction",
+    "url": "/docs/chapters/physical-ai-intro"
   }
 }
 ```
 
-### Get Conversation History
+**POST /api/chat/conversations**
+Create a new conversation.
 
-```bash
-GET /api/chat/conversations/:conversationId
+**GET /api/chat/conversations/{id}**
+Get conversation with all messages.
 
-Response:
-{
-  "id": "uuid",
-  "createdAt": "2026-02-10T12:00:00Z",
-  "updatedAt": "2026-02-10T12:05:00Z",
-  "messages": [...],
-  "context": {
-    "summary": "...",
-    "topics": ["Python", "error handling"],
-    "tokenCount": 1250
-  },
-  "status": "active"
-}
-```
+### Health
 
-### End Conversation
+**GET /api/health**
+Basic health check.
 
-```bash
-DELETE /api/chat/conversations/:conversationId
+**GET /api/health/detailed**
+Detailed health check with database status.
 
-Response: 204 No Content
-```
+## Deployment
 
-### Health Check
+### Railway (Recommended)
 
-```bash
-GET /api/health
+1. Create Railway project
+2. Connect GitHub repo
+3. Set environment variables
+4. Deploy command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
-Response:
-{
-  "status": "healthy",
-  "timestamp": "2026-02-10T12:00:00Z",
-  "services": {
-    "cohere": "available"
-  }
-}
-```
+### Render
+
+1. Create new Web Service
+2. Connect GitHub repo
+3. Build command: `pip install -r requirements.txt`
+4. Start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
 ## Project Structure
 
 ```
 backend/
-├── src/
-│   ├── agent/
-│   │   ├── core/           # Agent, Runner, Tool interfaces
-│   │   ├── providers/      # CohereAdapter (provider abstraction)
-│   │   ├── prompts/        # SystemPrompts, PromptOrchestrator
-│   │   └── memory/         # ConversationMemory (session management)
-│   ├── api/
-│   │   ├── routes/         # Express routes (chat, health)
-│   │   ├── middleware/     # Error handling, validation
-│   │   └── server.ts       # Express app setup
-│   ├── models/             # Conversation, Message, Context entities
-│   ├── services/           # ChatService, SafetyService
-│   └── utils/              # Config, logger, errors
-└── tests/
-    ├── unit/               # Unit tests
-    ├── integration/        # API integration tests
-    └── fixtures/           # Test data
+├── app/
+│   ├── main.py              # FastAPI app
+│   ├── config.py            # Settings
+│   ├── models/
+│   │   ├── chat.py         # Chat models
+│   │   └── document.py     # Document models
+│   ├── services/
+│   │   ├── embeddings.py   # Cohere embeddings
+│   │   ├── generation.py   # Cohere generation
+│   │   ├── retrieval.py    # Qdrant search
+│   │   └── rag_pipeline.py # Main RAG logic
+│   ├── db/
+│   │   ├── postgres.py     # Neon client
+│   │   ├── qdrant.py       # Qdrant client
+│   │   └── schema.sql      # Database schema
+│   └── api/
+│       └── routes/
+│           ├── chat.py     # Chat endpoints
+│           └── health.py   # Health endpoints
+├── scripts/
+│   └── ingest_content.py   # Content ingestion
+└── requirements.txt
 ```
-
-## Safety Features
-
-### Prohibited Topics
-
-The chatbot automatically detects and refuses:
-- **Medical advice** - "I cannot provide medical advice. Please consult a qualified healthcare professional."
-- **Legal advice** - "I cannot provide legal advice. Please consult a qualified attorney."
-- **Financial advice** - "I cannot provide financial advice. Please consult a qualified financial advisor."
-- **Autonomous actions** - "I cannot perform autonomous actions. I can guide you through the steps, but you must execute them."
-
-### Uncertainty Admission
-
-The chatbot explicitly states when:
-- Information is uncertain
-- Knowledge is outdated (cutoff: January 2025)
-- Topic is outside expertise
-
-## Context Management
-
-- **Session Timeout**: 30 minutes of inactivity
-- **Token Limit**: 100,000 tokens (auto-pruning when exceeded)
-- **Message Retention**: Last 20 messages kept, older messages summarized
-- **Topic Tracking**: Automatically extracts and tracks conversation topics
-- **Context Shift Detection**: Detects when conversation topic changes
-
-## Error Handling
-
-- **Rate Limiting**: Exponential backoff (1s → 2s → 4s)
-- **Timeouts**: 10-second timeout for API calls
-- **Graceful Degradation**: User-friendly error messages
-- **Retry Logic**: Up to 3 retries for transient errors
 
 ## Development
 
-### Run Tests
-
+Run with auto-reload:
 ```bash
-# All tests
-npm test
-
-# Unit tests only
-npm run test:unit
-
-# Integration tests only
-npm run test:integration
-
-# With coverage
-npm run test:coverage
+uvicorn app.main:app --reload
 ```
 
-### Linting & Formatting
+View API docs:
+- Swagger UI: http://localhost:8000/docs
+- ReDoc: http://localhost:8000/redoc
 
-```bash
-# Lint
-npm run lint
+## Cost Estimate
 
-# Format
-npm run format
-```
+- Cohere: ~$5-10/month (moderate usage)
+- Qdrant Cloud: Free (1GB tier)
+- Neon Postgres: Free tier
+- Railway: Free (500 hours/month)
 
-## Performance
-
-- **Response Time**: <2s for 95% of queries
-- **Concurrent Conversations**: Supports 100+ concurrent sessions
-- **Token Efficiency**: Automatic context pruning to manage costs
-- **Memory Usage**: In-memory storage (MVP), extensible to Redis/PostgreSQL
-
-## Deployment
-
-### Environment Variables
-
-```bash
-# Required
-COHERE_API_KEY=your_key
-
-# Optional
-PORT=3000
-NODE_ENV=production
-LOG_LEVEL=info
-SESSION_TIMEOUT_MS=1800000
-MAX_CONTEXT_TOKENS=100000
-ALLOWED_ORIGINS=https://yourdomain.com
-```
-
-### Docker (Optional)
-
-```dockerfile
-FROM node:20-alpine
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --only=production
-COPY . .
-RUN npm run build
-EXPOSE 3000
-CMD ["npm", "start"]
-```
-
-## Troubleshooting
-
-### "Invalid API Key" Error
-
-- Verify `COHERE_API_KEY` is set in `.env`
-- Check key is valid at [Cohere Dashboard](https://dashboard.cohere.com)
-
-### "Rate Limit Exceeded" Error
-
-- Cohere free tier: 100 requests/minute
-- Automatic retry with exponential backoff
-- Consider upgrading Cohere plan
-
-### Slow Response Times
-
-- Check network latency to Cohere API
-- Monitor token usage (large contexts = slower)
-- Consider using streaming responses (future enhancement)
-
-## Roadmap
-
-- [ ] Frontend UI (React/Next.js)
-- [ ] Tool calling support (web search, code execution)
-- [ ] Streaming responses
-- [ ] Conversation persistence (PostgreSQL)
-- [ ] User authentication
-- [ ] Rate limiting middleware
-- [ ] Deployment guides (Vercel, Railway, AWS)
-
-## License
-
-MIT
-
-## Support
-
-For issues or questions:
-1. Check this README
-2. Review API documentation
-3. Check logs for error details
-4. Open an issue on GitHub
-
----
-
-**Built with ❤️ using Cohere and TypeScript**
+**Total: ~$5-10/month**

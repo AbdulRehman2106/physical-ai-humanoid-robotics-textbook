@@ -1,19 +1,15 @@
 {
   "version": 2,
-  "name": "physical-ai-backend",
   "builds": [
     {
-      "src": "api/index.ts",
-      "use": "@vercel/node"
+      "src": "app/main.py",
+      "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "api/index.ts"
+      "dest": "app/main.py"
     }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  }
+  ]
 }

@@ -1,30 +1,15 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version Change: 1.0.0 → 1.1.0
-Constitution Type: Minor amendment (new principle added)
+Version Change: 1.1.0 → 1.2.0
+Constitution Type: Minor amendment (chatbot sections removed)
 Ratification Date: 2026-02-09
-Last Amended: 2026-02-10
+Last Amended: 2026-02-13
 
-Modified Principles: N/A
-Added Sections:
+Modified Principles: Removed Core Principle VIII (AI Assistant Integration)
+Removed Sections:
   - Core Principle VIII: AI Assistant Integration
   - Technical Standards: AI Chatbot Requirements
-
-Removed Sections: N/A
-
-Templates Requiring Updates:
-  ✅ Constitution updated
-  ⚠️ Plan template - needs alignment with AI assistant requirements
-  ⚠️ Spec template - needs alignment with chatbot integration
-  ⚠️ Tasks template - needs AI assistant implementation tasks
-
-Follow-up TODOs:
-  - Set up Cohere API key environment variable
-  - Implement provider abstraction layer
-  - Create chatbot UI component
-  - Test graceful fallback mechanisms
-  - Document chatbot usage in user guide
 -->
 
 # Physical AI & Humanoid Robotics Digital Book Constitution
@@ -124,22 +109,6 @@ Content creation MUST use the skills library system:
 
 **Verification**: All content creation references specific skills used; new skills documented and added to library; skill integration tested.
 
-### VIII. AI Assistant Integration
-
-AI-powered assistance MUST follow provider-agnostic architecture:
-- LLM provider MUST be interchangeable without changing agent logic
-- All completions routed through abstraction layer (NO direct provider calls)
-- Cohere API as primary provider; OpenAI Agent SDK patterns for compatibility
-- Responses optimized for clarity, accuracy, and task completion
-- Graceful fallback on API or tool failure with user-friendly error messages
-- NO hallucinated facts; uncertainty admitted explicitly
-- Conversational memory stateless by default; long-term memory optional and explicit
-- API keys handled via environment variables (NEVER hardcoded)
-
-**Rationale**: AI assistance enhances learning by providing instant help, but must be reliable, accurate, and provider-independent. Students need trustworthy answers without vendor lock-in.
-
-**Verification**: Provider swap tested with minimal refactor; error handling validated; response accuracy measured; API key security audited; fallback mechanisms tested.
-
 ## Technical Standards
 
 ### Citation and Attribution
@@ -165,20 +134,6 @@ AI-powered assistance MUST follow provider-agnostic architecture:
 - **Animations**: Framer Motion or CSS animations (60fps minimum)
 - **Media**: SVG for diagrams; WebP for photos; MP4 for videos
 - **Performance**: Lighthouse score 90+ for performance, accessibility, best practices
-
-### AI Chatbot Requirements
-
-- **Provider**: Cohere (Command / Command-R / Command-R+)
-- **Architecture**: OpenAI Agent SDK-compatible patterns (Agent, Runner, Tool abstraction)
-- **API Key**: Environment variable `COHERE_API_KEY` (NEVER committed to repository)
-- **Prompting**: System-driven, instruction-following, deterministic where possible
-- **Memory**: Short-term conversational memory; stateless by default
-- **Tool Calling**: Agent-style routing for function calls
-- **Error Handling**: Graceful fallback with user-friendly messages
-- **Response Quality**: Clear separation of system prompt, user input, and tool output
-- **Performance**: Low-latency conversational flow (< 2s response time target)
-- **Safety**: No hallucinated facts; explicit uncertainty admission
-- **Context**: Textbook-specific knowledge about Physical AI, ROS 2, simulation
 
 ## Content Constraints
 

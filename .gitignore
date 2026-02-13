@@ -63,3 +63,5 @@ coverage/
 # Package manager
 .yarn/
 .pnp.*
+
+.vercel
